@@ -1,4 +1,4 @@
-from model import SimulationModel
+from app.equation import SimulationModel
 from view import SimulationView
 
 class GeneratorController:
