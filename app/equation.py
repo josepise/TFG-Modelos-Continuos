@@ -62,6 +62,10 @@ class Equation:
         """Devuelve la ecuación procesada."""
         return self.equation
     
+    def get_constants(self):
+        """Devuelve las constantes de la ecuación."""
+        return self.constants
+    
     def get_constants_values(self):
         """Retorna el diccionario de constantes con sus valores."""
         return self.constant_values
