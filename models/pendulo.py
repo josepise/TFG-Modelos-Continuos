@@ -17,6 +17,7 @@ tf = 10
 dt = 0.1
 t = np.arange(t0, tf, dt)
 
+# Fallaba el orden en el que introducíamos los valores de las variables en la función deriv
 def deriv(inp):
 	out=[]
 	out.append(-(g/l)*np.sin(inp[1]))

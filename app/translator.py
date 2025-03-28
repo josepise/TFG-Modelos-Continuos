@@ -81,8 +81,13 @@ class PythonSimulationGenerator(SimulationModelGenerator):
 
         # Añadimos la variable que cuenta los pasos de tiempo
         self.file.write("iteration = 0\n")
+
         # Crear una lista basada en el número de ecuaciones
-        n = len(self.equations[0].get_simbol())
+        try:
+            n = len(self.equations[0].get_simbol())
+        except:
+            n = 1
+
         list_str = f"[{', '.join(['[]' for _ in range(n)])}]"
 
         self.file.write("est = " + list_str + "\n")
@@ -99,7 +104,12 @@ class PythonSimulationGenerator(SimulationModelGenerator):
         self.file.write("def initialize():\n")
         self.file.write("    iteration = 0\n")
         # Crear una lista basada en el número de ecuaciones
-        n = len(self.equations[0].get_simbol())
+        # COmprobamos que no obtenemos un error con len(self.equations[0].get_simbol))
+        try:
+            n = len(self.equations[0].get_simbol())
+        except:
+            n = 1
+
         list_str = f"[{', '.join(['[]' for _ in range(n)])}]"
 
         self.file.write("est = " + list_str + "\n")
@@ -119,7 +129,10 @@ class PythonSimulationGenerator(SimulationModelGenerator):
             #Sustituimos los simbolos por la cadena est[i] para poder evaluar la ecuación.
 
             symbols = equation.get_simbol()
-            subs_dict = {str(sym): sp.Symbol(f'inp[{j}]') for j, sym in enumerate(symbols)}
+            try:
+                subs_dict = {str(sym): sp.Symbol(f'inp[{j}]') for j, sym in enumerate(symbols)}
+            except:
+                subs_dict = {str(symbols): sp.Symbol(f'inp[0]')}
  
             # Realizamos la sustitución con el diccionario generado
             eq = equation.get_equation().subs(subs_dict)
@@ -185,23 +198,39 @@ class PythonSimulationGenerator(SimulationModelGenerator):
         self.file.write("if __name__ == '__main__':\n")
         self.file.write("    main()\n")
 
-        for i, symbol in enumerate(self.equations[0].get_simbol()):
-            self.file.write(f"    plt.plot(t, est[{i}], label='{symbol}')\n")
+        try:
+            for i, symbol in enumerate(self.equations[0].get_simbol()):
+                self.file.write(f"    plt.plot(t, est[{i}], label='{symbol}')\n")
+        except:
+            self.file.write(f"    plt.plot(t, est[0], label='{self.equations[0].get_simbol()}')\n")
 
         self.file.write("    plt.show()\n")
         self.file.write("\n\n")
     
-    
-eq = Equation()
-eq.add_equation("a*x-b*x*y", 'x y', 'a b ', {"a": 5, "b": 0.05})
+
+# EJEMPLO LOksta-Volterra  
+# eq = Equation()
+# eq.add_equation("a*x-b*x*y", 'x y', 'a b ', {"a": 5, "b": 0.05})
+# eq.process_equations()
+# eq2 = Equation()
+# eq2.add_equation("c*x*y-d*y", 'x y', 'c d', {"c":0.0004 , "d":0.2})
+# eq2.process_equations()
+# equations = [eq, eq2]
+
+# PythonSimulationGenerator(equations, [], {"x":450,"y":90},"simulation", "runge-kutta-4").generate_file()
+
+
+# Ejemplo calefactor con termostato
+eq=Equation()
+eq.add_equation("y","y","",{})
 eq.process_equations()
-eq2 = Equation()
-eq2.add_equation("c*x*y-d*y", 'x y', 'c d', {"c":0.0004 , "d":0.2})
-eq2.process_equations()
-equations = [eq, eq2]
 
-PythonSimulationGenerator(equations, [], {"x":450,"y":90},"simulation", "runge-kutta-4").generate_file()
-
+eq1=Equation()
+eq1.add_equation("-(g/l)*sin(y_1)","y_1","g l",{"g":9.8,"l":10})
+eq1.process_equations()
+print(eq1.get_simbol())
+equations = [eq,eq1]
+PythonSimulationGenerator(equations, [], {"y": 3.1, "y_1": 0}, "simulation", "runge-kutta-4").generate_file()
 
 
     
