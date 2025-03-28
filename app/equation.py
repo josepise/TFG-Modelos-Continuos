@@ -38,7 +38,7 @@ class Equation:
         self.constants = '' # Almacena las constantes de la ecuación.
         self.constant_values = {} # Diccionario para almacenar los valores de las constantes de las ecuaciones.
 
-    def add_equation(self, equation, simbols, constants, values={}):
+    def add_equation(self, equation, simbols, constants, values={}, init_var_value={}):
         """ 
         Método para agregar una ecuación a la lista de ecuaciones.
         Parameters
@@ -57,6 +57,7 @@ class Equation:
             self.text_equation.append(simbols)
             self.text_equation.append(constants)
             self.constant_values.update(values)
+          
     
     def get_equation(self):
         """Devuelve la ecuación procesada."""
@@ -67,11 +68,12 @@ class Equation:
         return self.constants
     
     def get_constants_values(self):
-        """Retorna el diccionario de constantes con sus valores."""
+        """Devuelve el diccionario de constantes con sus valores."""
         return self.constant_values
     
+    
     def get_simbol(self):
-        """Retorna los símbolos de la ecuación."""
+        """Devuelve los símbolos de la ecuación."""
         return self.simbol
 
     def process_equations(self):
@@ -135,6 +137,7 @@ class Equation:
             if str(s) not in equation_symbols:
                 errors += f"\nError(Missing Symbol): El símbolo {s} no se encuentra en la ecuación."
         
+
         # Comprobamos que las constantes se encuentren en la ecuación
         for c in self.constants:
             if str(c) not in equation_symbols:
@@ -144,6 +147,8 @@ class Equation:
         for c in self.constants:
             if str(c) not in self.constant_values:
                 errors += f"\nError(Missing Constant Value): La constante {c} no tiene un valor asignado."
+        
+    
 
         try:
             self.equation = self.equation.subs(self.constant_values)
