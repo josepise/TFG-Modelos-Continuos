@@ -32,13 +32,14 @@ class Equation:
         Convierte el texto de la ecuación, símbolos y constantes en objetos sympy y los almacena.
     """
     def __init__(self):
+        self.name = '' # Nombre de la ecuación.
         self.text_equation = [] # Almacena el texto introducido por el usuario de las ecuaciones.
         self.equation = '' # Almacena las ecuaciones procesadas para ser tratadas por sympy.
         self.simbol = '' # Almacena los símbolos de la ecuación.
         self.constants = '' # Almacena las constantes de la ecuación.
         self.constant_values = {} # Diccionario para almacenar los valores de las constantes de las ecuaciones.
 
-    def add_equation(self, equation, simbols, constants, values={}, init_var_value={}):
+    def add_equation(self, name, equation, simbols, constants, values={}, init_var_value={}):
         """ 
         Método para agregar una ecuación a la lista de ecuaciones.
         Parameters
@@ -53,11 +54,15 @@ class Equation:
             Diccionario con los valores de las constantes.
         """
         if equation:
+            self.name = name
             self.text_equation.append(equation)
             self.text_equation.append(simbols)
             self.text_equation.append(constants)
             self.constant_values.update(values)
           
+    def get_name(self):
+        """Devuelve el nombre de la ecuación."""
+        return self.name
     
     def get_equation(self):
         """Devuelve la ecuación procesada."""
@@ -157,13 +162,3 @@ class Equation:
 
         return errors
     
-#Añade un main para comprobar la funcionalidad de la clase.
-if __name__ == "__main__":
-    eq = Equation()
-    eq.add_equation("a*x**2 + b*x + c*y", 'x y', 'a b c', {"a": 1, "b": 2, "c": 3})
-    print(eq.process_equations())
-    print(eq.check_components())
-    print(eq.get_equation())
-    print(eq.get_equation().subs({"x": sp.Symbol('est[1]'), "y": sp.Symbol('est[2]')}))
-    print(eq.get_constants_values())
-    print(eq.get_simbol())
