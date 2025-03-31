@@ -5,8 +5,10 @@ import matplotlib.pyplot as plt
 n_equations = 2
 
 # Parámetros del modelo
-g = 9.8
-l = 1
+a = 5
+b = 0.05
+c = 0.0004
+d = 0.2
 
 
 iteration = 0
@@ -14,16 +16,16 @@ est = [[], []]
 
 
 t0 = 0
-tf = 40
+tf = 50
 dt = 0.1
 t = np.arange(t0, tf, dt)
 
 
 def deriv(inp):
-	y_1=inp[0]
-	y_2=-g*np.sin(inp[1])/l
+	x=a*inp[0] - b*inp[0]*inp[1]
+	y=c*inp[0]*inp[1] - d*inp[1]
 
-	return [y_2, y_1]
+	return [x, y]
 
 
 def one_step_runge_kutta_4(tt, hh, paso):
@@ -44,10 +46,10 @@ def one_step_runge_kutta_4(tt, hh, paso):
         est[i].append(inp[i] + hh / 6 * (k[i][0] + 2 * k[i][1] + 2 * k[i][2] + k[i][3]))
 
 
-def main():
+def simulation():
 	global iteration
-	est[1].append(3.1)
-	est[0].append(0.0)
+	est[0].append(30)
+	est[1].append(90)
 
 	for i in range(1, len(t)):
 		iteration += 1
@@ -55,9 +57,9 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
-    plt.plot(est[1], est[0], label='y_2')
-    # plt.plot(t, est[1], label='y_1')
-    plt.show()
+	simulation()
 
-
+	# Guardamos los resultados en un archivo de texto
+	with open('results.csv', 'w') as f:
+		for i in range(len(t)):
+			f.write(f'{t[i]} 	{est[0][i]}	{est[1][i]}	 \n')

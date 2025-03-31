@@ -1,4 +1,4 @@
-from ContinuousModelGenerator import PythonSimulationGenerator, Equation
+from ContinuousModelGenerator import PythonSimulationGenerator, Equation, CppSimulationGenerator
 
 
 # EJEMPLO LOksta-Volterra  
@@ -10,4 +10,6 @@ eq2.add_equation("y","c*x*y-d*y", "x y", "c d", {"c":0.0004 , "d":0.2})
 eq2.process_equations()
 equations = [eq, eq2]
 
-PythonSimulationGenerator(equations, [], {"x":450,"y":90},[0,50,0.1],"loksta-volterra", "runge-kutta-4").generate_file()
+# PythonSimulationGenerator(equations, [], {"x":30,"y":90},[0,50,0.1],"loksta-volterra","csv", "runge-kutta-4").generate_file()
+
+CppSimulationGenerator(equations, [], {"x":30,"y":90},[0,50,0.1],"loksta-volterra",  "runge-kutta-4").generate_file()

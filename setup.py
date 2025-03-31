@@ -8,5 +8,5 @@ setup(
     description="Generador de modelos continuos para simulaciones",
     author="Jose Pineda",
     author_email="jose.pineda.serrano@gmail.com",
-    url="https://github.com/josepise/TFG-Modelos-Continuos",  # Opcional
+    url="https://github.com/josepise/TFG-Modelos-Continuos",  
 )

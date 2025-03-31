@@ -2,15 +2,16 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-n_equations = 2
+n_equations = 4
 
 # Parámetros del modelo
-g = 9.8
-l = 1
+g = 1
+l_0 = 1
+k = 1
 
 
 iteration = 0
-est = [[], []]
+est = [[], [], [], []]
 
 
 t0 = 0
@@ -21,9 +22,11 @@ t = np.arange(t0, tf, dt)
 
 def deriv(inp):
 	y_1=inp[0]
-	y_2=-g*np.sin(inp[1])/l
+	y_2=g*np.cos(inp[3]) + inp[1]*inp[2]**2 - k*(inp[1] - l_0)
+	y_3=inp[2]
+	y_4=-g*np.sin(inp[3])/inp[1] - 2*inp[0]*inp[2]/inp[1]
 
-	return [y_2, y_1]
+	return [y_2, y_1, y_4, y_3]
 
 
 def one_step_runge_kutta_4(tt, hh, paso):
@@ -47,7 +50,9 @@ def one_step_runge_kutta_4(tt, hh, paso):
 def main():
 	global iteration
 	est[1].append(3.1)
-	est[0].append(0.0)
+	est[0].append(0)
+	est[3].append(0)
+	est[2].append(0)
 
 	for i in range(1, len(t)):
 		iteration += 1
@@ -56,8 +61,10 @@ def main():
 
 if __name__ == '__main__':
     main()
-    plt.plot(est[1], est[0], label='y_2')
-    # plt.plot(t, est[1], label='y_1')
+    plt.plot(t, est[0], label='y_2')
+    plt.plot(t, est[1], label='y_1')
+    plt.plot(t, est[2], label='y_4')
+    plt.plot(t, est[3], label='y_3')
     plt.show()
 
 

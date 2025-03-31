@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 
 
 n_equations = 4
+
 # Parámetros del modelo
 a = 2
 
@@ -26,25 +27,14 @@ def deriv(inp):
 	return [p_1, p_2, p_4, p_3]
 
 
-def one_step_runge_kutta_4(tt, hh, paso):
+def one_step_euler(tt, hh, paso):
     inp = [est[i][paso-1] for i in range(n_equations)]
-    out = [est[i][paso-1] for i in range(n_equations)]
-    k = [[] for _ in range(n_equations)]
-    for j in range(4):
-        out=deriv(out)
-        for i in range(n_equations):
-            k[i].append(out[i])
-        if j < 2:
-            incr = hh / 2
-        else:
-            incr = hh
-        for i in range(n_equations):
-            out[i] = inp[i] + k[i][j] * incr
+    out=deriv(inp)
     for i in range(n_equations):
-        est[i].append(inp[i] + hh / 6 * (k[i][0] + 2 * k[i][1] + 2 * k[i][2] + k[i][3]))
+        est[i].append(inp[i] + (hh * out[i]))
 
 
-def main():
+def simulation():
 	global iteration
 	est[0].append(1)
 	est[1].append(0)
@@ -53,15 +43,9 @@ def main():
 
 	for i in range(1, len(t)):
 		iteration += 1
-		one_step_runge_kutta_4(t[i-1], dt, iteration)
+		one_step_euler(t[i-1], dt, iteration)
 
 
 if __name__ == '__main__':
-    main()
-    plt.plot(t, est[0], label='p_1')
-    plt.plot(t, est[1], label='p_2')
-    plt.plot(t, est[2], label='p_4')
-    plt.plot(t, est[3], label='p_3')
-    plt.show()
-
+	simulation()
 

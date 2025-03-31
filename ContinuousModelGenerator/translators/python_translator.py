@@ -1,75 +1,14 @@
-from abc import ABC, abstractmethod
-from .equation import Equation
+from .translator import SimulationModelGenerator
+from ..equation import Equation
 import sympy as sp
 import os
 
-class SimulationModelGenerator(ABC):
-    
-
-    def __init__(self, equations, conditionals, initial_state, simulation_time, name_file, numerical_method="euler"):
-        self.equations = equations
-        self.conditionals = conditionals
-        self.name_file = name_file
-        self.numerical_method = numerical_method
-        self.initial_state=initial_state
-        self.simulation_time = simulation_time
-    
-    @abstractmethod
-    def generate_file(self):
-        pass
-
-
-    def check_initial_state(self):
-
-        #Comprobamos que cada variable de las ecuaciones tenga un valor inicial.
-        try:
-            for equation in self.equations:
-                for symbol in equation.get_simbol():
-                    if symbol not in self.initial_state:
-                        raise ValueError(f"La variable {symbol} no tiene un valor inicial asignado.")
-        except:
-            symbol = equation.get_simbol()
-            if symbol not in self.initial_state:
-                raise ValueError(f"La variable {symbol} no tiene un valor inicial asignado.")
-
-    def set_var_identifiers(self):
-
-        #Comprobamos que cada variable de las ecuaciones tenga un valor inicial.
-        # self.check_initial_state()
-
-        #Definimos una lista de identificadores para las variables.
-        self.var_identifiers = {}
-        
-        index_var = 0 # Contador para los indices de las variables.
-
-        #Iteramos sobre las ecuaciones y sus variables para definir un único identificador
-        # por cada una. Las variables que tengan el mismo nombre se consideran la misma.
-        for equation in self.equations:
-
-            try:
-                for symbol in equation.get_simbol():
-                    if str(symbol) not in self.var_identifiers:
-                        # Añadimos el símbolo a la lista de identificadores como string.
-                        self.var_identifiers[str(symbol)] = index_var
-                        index_var += 1
-            except:
-                symbol = str(equation.get_simbol())
-                if symbol not in self.var_identifiers:
-                    # Añadimos el símbolo a la lista de identificadores.
-                    self.var_identifiers[symbol] = index_var
-                    index_var += 1
-    
-        
-
-# Hacemos una clase que genere el archivo de simulación continua en python.
-
 class PythonSimulationGenerator(SimulationModelGenerator):
 
-    def __init__(self, equations, conditionals, initial_state, simulation_time, name_file, numerical_method="euler"):
+    def __init__(self, equations, conditionals, initial_state, simulation_time, name_file, output, numerical_method="euler"):
         super().__init__(equations, conditionals,initial_state, simulation_time, name_file, numerical_method)
         self.operators={"sin":"np.sin", "cos":"np.cos", "tan":"np.tan", "exp":"np.exp", "log":"np.log", "sqrt":"np.sqrt"}
-        self.types={"radians":"np.radians", "degrees":"np.degrees"}
-    
+        self.output=output
 
     def generate_file(self):
         
@@ -90,8 +29,8 @@ class PythonSimulationGenerator(SimulationModelGenerator):
         elif self.numerical_method == "runge-kutta-4":
             self.write_runge_kutta_4_method()
 
-        self.write_main()
-        self.plot_results()
+        self.write_simulation()
+        self.main()
 
     def write_head_file(self):
         #Añadimos los imports necesarios.
@@ -102,7 +41,7 @@ class PythonSimulationGenerator(SimulationModelGenerator):
     def write_model_parameters(self):
         
         #Añadimos una constante que contenga el número de ecuaciones.
-        self.file.write("n_equations = " + str(len(self.equations)) + "\n")
+        self.file.write("n_equations = " + str(len(self.equations)) + "\n\n")
 
         #Añadimos las constantes de las ecuaciones y sus valores.
         self.file.write("# Parámetros del modelo\n")
@@ -152,7 +91,6 @@ class PythonSimulationGenerator(SimulationModelGenerator):
         list_str = f"[{', '.join(['[]' for _ in range(n)])}]"
 
         self.file.write("est = " + list_str + "\n")
-        self.file.write("f = " + list_str + "\n")
         self.file.write("\n\n")
 
 
@@ -163,13 +101,13 @@ class PythonSimulationGenerator(SimulationModelGenerator):
     
         #Añadimos las ecuaciones al archivo.
         for i,equation in enumerate(self.equations):
+            
             #Sustituimos los simbolos por la cadena inp[i] para poder evaluar la ecuación.
-
             symbols = equation.get_simbol()
+    
             try:
                 subs_dict = {str(sym): sp.Symbol(f'inp[{self.var_identifiers[str(sym)]}]') for sym in symbols}
             except:
-
                 subs_dict = {str(symbols): sp.Symbol(f'inp[{self.var_identifiers[str(symbols)]}]')}
  
             # Realizamos la sustitución con el diccionario generado
@@ -234,8 +172,8 @@ class PythonSimulationGenerator(SimulationModelGenerator):
 
 
 
-    def write_main(self):
-        self.file.write("def main():\n")
+    def write_simulation(self):
+        self.file.write("def simulation():\n")
         self.file.write("\tglobal iteration\n")
         
         #Añadimos las condiciones iniciales.
@@ -252,21 +190,39 @@ class PythonSimulationGenerator(SimulationModelGenerator):
 
         self.file.write("\n\n")
 
-    def plot_results(self):
+
+    def main(self):
         self.file.write("if __name__ == '__main__':\n")
-        self.file.write("    main()\n")
+        self.file.write("\tsimulation()\n")
+        self.file.write("\n")
+
+        if self.output == "csv":
+            self.write_results()
+        elif self.output == "plot":
+            self.plot_results()
+
+
+    def plot_results(self):
 
         for symbol, index in self.var_identifiers.items():
-            self.file.write(f"    plt.plot(t, est[{index}], label='{symbol}')\n")
+            self.file.write(f"\tplt.plot(t, est[{index}], label='{symbol}')\n")
 
-        self.file.write("    plt.show()\n")
+        self.file.write("\tplt.show()\n")
         self.file.write("\n\n")
     
+    def write_results(self):
+        # Añadimos la salida de las variables en el archivo.
+        self.file.write("\t# Guardamos los resultados en un archivo de texto\n")
+        self.file.write("\twith open('results.csv', 'w') as f:\n")
+        self.file.write("\t\tfor i in range(len(t)):\n")
+        self.file.write("\t\t\tf.write(f'{t[i]} ")
+        
+        # Creamos una cadena en la que esten separadas est[indice][i] por tabuladores
+        # necesaria para el formato csv.
+        cadena = "\t"
+        for symbol, index in self.var_identifiers.items():
+            cadena += "{"+ f"est[{index}]"+"[i]"+"}"    
+            cadena += "\t"
 
+        self.file.write(f"{cadena} \\n')\n")
 
-
-
-
-
-
-    
