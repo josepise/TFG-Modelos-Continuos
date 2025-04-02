@@ -26,6 +26,8 @@ class PythonSimulationGenerator(SimulationModelGenerator):
         #Añadimos el método de integración.
         if self.numerical_method == "euler":
             self.write_euler_method()
+        elif self.numerical_method == "euler-improved":
+            self.write_euler_improved_method()
         elif self.numerical_method == "runge-kutta-4":
             self.write_runge_kutta_4_method()
 
@@ -45,6 +47,8 @@ class PythonSimulationGenerator(SimulationModelGenerator):
 
         #Añadimos las constantes de las ecuaciones y sus valores.
         self.file.write("# Parámetros del modelo\n")
+
+        list_constants = []
         for equation in self.equations:
             constant_values = equation.get_constants_values()
 
@@ -52,12 +56,17 @@ class PythonSimulationGenerator(SimulationModelGenerator):
             # En caso de que haya una sola constante, la añadimos directamente.
             try:
                 for constant in equation.get_constants():
-                    value = constant_values[str(constant)]  # Convertimos la constante a string si es necesario
-                    self.file.write(f"{constant} = {value}\n")
+                    if constant not in list_constants:
+                        list_constants.append(constant)
+                        value = constant_values[str(constant)]  # Convertimos la constante a string si es necesario
+                        self.file.write(f"{constant} = {value}\n")
             except:
+                
                 constant = equation.get_constants()
-                value = constant_values[str(constant)]
-                self.file.write(f"{equation.get_constants()} = {value}\n")
+                if constant not in list_constants:
+                    list_constants.append(constant)
+                    value = constant_values[str(constant)]
+                    self.file.write(f"{equation.get_constants()} = {value}\n")
 
         self.file.write("\n\n")
 
@@ -105,6 +114,7 @@ class PythonSimulationGenerator(SimulationModelGenerator):
             #Sustituimos los simbolos por la cadena inp[i] para poder evaluar la ecuación.
             symbols = equation.get_simbol()
     
+
             try:
                 subs_dict = {str(sym): sp.Symbol(f'inp[{self.var_identifiers[str(sym)]}]') for sym in symbols}
             except:
@@ -120,7 +130,7 @@ class PythonSimulationGenerator(SimulationModelGenerator):
             for operator, replacement in self.operators.items():
                 eq = eq.replace(operator, replacement)
 
-
+            #Escribimos la ecuación en el archivo.
             self.file.write(f"\t{equation.get_name()}={eq}\n")
         
         self.file.write("\n")
@@ -130,11 +140,20 @@ class PythonSimulationGenerator(SimulationModelGenerator):
         
         #Escribimos la salida de la función deriv en el mismo orden que queda descrita en
         # var_identifiers.
-        for var_name in self.var_identifiers.keys():
-            cadena += f"{var_name}"
-            if list(self.var_identifiers.keys()).index(var_name) < len(self.var_identifiers) - 1:
-                cadena += ", "
+        # for var_name in self.var_identifiers.keys():
+        #     cadena += f"{var_name}"
+        #     if list(self.var_identifiers.keys()).index(var_name) < len(self.var_identifiers) - 1:
+        #         cadena += ", "
 
+        # Escribmos el nombre de la ecuación como salida en el mismo orden que está en 
+        # var_identifiers.
+        for var_name in self.var_identifiers.keys():
+            for equation in self.equations:
+                if var_name == equation.get_name():
+                    cadena += f"{equation.get_name()}"
+                    if list(self.var_identifiers.keys()).index(var_name) < len(self.var_identifiers) - 1:
+                        cadena += ", "
+                    break
         #Añadimos la salida de la función deriv.
         self.file.write(f"\treturn [{cadena}]\n")
         self.file.write("\n\n")
@@ -148,6 +167,21 @@ class PythonSimulationGenerator(SimulationModelGenerator):
         self.file.write("    out=deriv(inp)\n")
         self.file.write("    for i in range(n_equations):\n")
         self.file.write("        est[i].append(inp[i] + (hh * out[i]))\n")
+        self.file.write("\n\n")
+
+
+    def write_euler_improved_method(self):
+
+        #Añadimos el metodo de Euler mejorado para resolver las ecuaciones.
+        self.file.write("def one_step_euler_improved(tt, hh, paso):\n")
+        self.file.write("    inp = [est[i][paso-1] for i in range(n_equations)]\n")
+        self.file.write("    out=deriv(inp)\n")
+        self.file.write("    for i in range(n_equations):\n")
+        self.file.write("        est[i].append(inp[i] + (hh * out[i]))\n")
+        self.file.write("    inp = [est[i][paso] for i in range(n_equations)]\n")
+        self.file.write("    out=deriv(inp)\n")
+        self.file.write("    for i in range(n_equations):\n")
+        self.file.write("        est[i][paso] = est[i][paso-1] + (hh * out[i])\n")
         self.file.write("\n\n")
 
     def write_runge_kutta_4_method(self):
@@ -177,14 +211,16 @@ class PythonSimulationGenerator(SimulationModelGenerator):
         self.file.write("\tglobal iteration\n")
         
         #Añadimos las condiciones iniciales.
-        for i, symbol in enumerate(self.initial_state):
-            self.file.write(f"\test[{self.var_identifiers[symbol]}].append({self.initial_state[symbol]})\n")
+        for i, symbol in enumerate(self.initial_conditions):
+            self.file.write(f"\test[{self.var_identifiers[symbol]}].append({self.initial_conditions[symbol]})\n")
         
         self.file.write("\n\tfor i in range(1, len(t)):\n")
         self.file.write("\t\titeration += 1\n")
         
         if self.numerical_method == "euler":
             self.file.write("\t\tone_step_euler(t[i-1], dt, iteration)\n")
+        elif self.numerical_method == "euler-improved":
+            self.file.write("\t\tone_step_euler_improved(t[i-1], dt, iteration)\n")
         elif self.numerical_method == "runge-kutta-4":
             self.file.write("\t\tone_step_runge_kutta_4(t[i-1], dt, iteration)\n")
 

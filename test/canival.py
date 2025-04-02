@@ -19,6 +19,6 @@ eq3.process_equations()
 
 equations = [eq,eq1,eq2,eq3]
 
-PythonSimulationGenerator(equations, [], {"p_1": 1, "p_2": 0, "p_3": 0, "p_4": 0}, [0,10,0.1], "canivals","csv", "runge-kutta-4").generate_file()
+PythonSimulationGenerator(equations, [], {"p_1": 1, "p_2": 0, "p_3": 0, "p_4": 0}, [0,10,0.1], "canivals","plot", "runge-kutta-4").generate_file()
 
-CppSimulationGenerator(equations, [], {"p_1": 1, "p_2": 0, "p_3": 0, "p_4": 0}, [0,10,0.1], "canivals","csv", "runge-kutta-4").generate_file()
+# CppSimulationGenerator(equations, [], {"p_1": 1, "p_2": 0, "p_3": 0, "p_4": 0}, [0,10,0.1], "canivals","csv", "runge-kutta-4").generate_file()

@@ -48,8 +48,8 @@ def one_step_runge_kutta_4(tt, hh, paso):
 
 def simulation():
 	global iteration
-	est[0].append(30)
 	est[1].append(90)
+	est[0].append(30)
 
 	for i in range(1, len(t)):
 		iteration += 1
@@ -59,7 +59,8 @@ def simulation():
 if __name__ == '__main__':
 	simulation()
 
-	# Guardamos los resultados en un archivo de texto
-	with open('results.csv', 'w') as f:
-		for i in range(len(t)):
-			f.write(f'{t[i]} 	{est[0][i]}	{est[1][i]}	 \n')
+	plt.plot(t, est[0], label='x')
+	plt.plot(t, est[1], label='y')
+	plt.show()
+
+

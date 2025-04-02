@@ -20,7 +20,7 @@ class Equation:
     -------
     __init__():
         Inicializa la clase Equation con listas vacías para almacenar la ecuación y un diccionario para los valores de las constantes.
-    add_equation(equation, simbols, constants, values={}):
+    __init__(equation, simbols, constants, values={}):
         Agrega una ecuación, sus símbolos y constantes.
     get_equation():
         Retorna la ecuación procesada.
@@ -36,10 +36,9 @@ class Equation:
         self.text_equation = [] # Almacena el texto introducido por el usuario de las ecuaciones.
         self.equation = '' # Almacena las ecuaciones procesadas para ser tratadas por sympy.
         self.simbol = '' # Almacena los símbolos de la ecuación.
-        self.constants = '' # Almacena las constantes de la ecuación.
         self.constant_values = {} # Diccionario para almacenar los valores de las constantes de las ecuaciones.
 
-    def add_equation(self, name, equation, simbols, constants, values={}, init_var_value={}):
+    def __init__(self, name, equation, simbols, constant_values={}):
         """ 
         Método para agregar una ecuación a la lista de ecuaciones.
         Parameters
@@ -53,12 +52,15 @@ class Equation:
         values : dict, optional
             Diccionario con los valores de las constantes.
         """
+        self.text_equation = [] # Almacena el texto introducido por el usuario de las ecuaciones.
+        self.constant_values = {} # Diccionario para almacenar los valores de las constantes de las ecuaciones.
+
         if equation:
             self.name = name
             self.text_equation.append(equation)
             self.text_equation.append(simbols)
-            self.text_equation.append(constants)
-            self.constant_values.update(values)
+            self.constant_values.update(constant_values)
+            self.process_equations()
           
     def get_name(self):
         """Devuelve el nombre de la ecuación."""
@@ -70,7 +72,7 @@ class Equation:
     
     def get_constants(self):
         """Devuelve las constantes de la ecuación."""
-        return self.constants
+        return self.constant_values.keys()
     
     def get_constants_values(self):
         """Devuelve el diccionario de constantes con sus valores."""
@@ -108,7 +110,7 @@ class Equation:
             errors += f"\nError(Wrong Symbols): Los símbolos no son válidos."
 
         try:
-            self.constants = sp.symbols(self.text_equation[2], constant=True)
+            self.constants = sp.symbols(self.constant_values.keys(), constant=True)
         except:
             errors += f"\nError(Wrong Constants): Las constantes no son válidas."
        
@@ -144,16 +146,10 @@ class Equation:
         
 
         # Comprobamos que las constantes se encuentren en la ecuación
-        for c in self.constants:
+        for c in self.constants_values.keys():
             if str(c) not in equation_symbols:
                 errors += f"\nError(Missing Constant): La constante {c} no se encuentra en la ecuación."
         
-        # Comprobamos que todas las constantes tengan un valor
-        for c in self.constants:
-            if str(c) not in self.constant_values:
-                errors += f"\nError(Missing Constant Value): La constante {c} no tiene un valor asignado."
-        
-    
 
         try:
             self.equation = self.equation.subs(self.constant_values)

@@ -5,8 +5,9 @@ import matplotlib.pyplot as plt
 n_equations = 2
 
 # Parámetros del modelo
-g = 9.81
-l = 9.8
+a = 1
+b = 3
+b = 3
 
 
 iteration = 0
@@ -14,16 +15,16 @@ est = [[], []]
 
 
 t0 = 0
-tf = 40
-dt = 0.1
+tf = 50
+dt = 0.2
 t = np.arange(t0, tf, dt)
 
 
 def deriv(inp):
-	y_1=inp[0]
-	y_2=-g*np.sin(inp[1])/l
+	x=a + inp[0]**2*inp[1] - inp[0]*(b + 1)
+	y=b*inp[0] - inp[0]**2*inp[1]
 
-	return [y_2, y_1]
+	return [x, y]
 
 
 def one_step_runge_kutta_4(tt, hh, paso):
@@ -46,8 +47,8 @@ def one_step_runge_kutta_4(tt, hh, paso):
 
 def simulation():
 	global iteration
-	est[1].append(0.541052)
-	est[0].append(0)
+	est[0].append(2)
+	est[1].append(1)
 
 	for i in range(1, len(t)):
 		iteration += 1
@@ -57,8 +58,7 @@ def simulation():
 if __name__ == '__main__':
 	simulation()
 
-	plt.plot(t, est[0], label='y_2')
-	plt.plot(t, est[1], label='y_1')
+	plt.plot(est[1], est[0], label='x')
 	plt.show()
 
 

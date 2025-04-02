@@ -1,14 +1,9 @@
 from ContinuousModelGenerator import Equation, PythonSimulationGenerator
 
 
-# Ejemplo Pendulo
-eq=Equation()
-eq.add_equation("y_1","y_2","y_2","",{})
-eq.process_equations()
-
-eq1=Equation()
-eq1.add_equation("y_2","-(g/l)*sin(y_1)","y_1","g l",{"g":9.8,"l":10})
-eq1.process_equations()
+# Example Pendulum with arguments
+eq = Equation("y_1", "y_2", "y_2", {})
+eq1 = Equation("y_2", "-(g/l)*sin(y_1)", "y_1", {"g": 9.81, "l": 9.8})
 
 equations = [eq,eq1]
-PythonSimulationGenerator(equations, [], {"y_1": 0.541052, "y_2": 0}, [0,40,0.1], "pendulum", "runge-kutta-4").generate_file()
+PythonSimulationGenerator(equations, [], {"y_1": 0.541052, "y_2": 0}, [0,40,0.1], "pendulum","plot" ,"runge-kutta-4").generate_file()
