@@ -80,9 +80,7 @@ class CppSimulationGenerator(SimulationModelGenerator):
                 subs_dict = {str(symbols): sp.Symbol(f'inp[{self.var_identifiers[str(symbols)]}]')}
 
             
-            print(f"subs_dict: {subs_dict}")
-            eq = equation.get_equation().subs(subs_dict)
-            
+            eq = equation.get_equation().subs(subs_dict)            
             eq = str(eq)
 
             for operator, replacement in self.operators.items():
@@ -137,7 +135,7 @@ class CppSimulationGenerator(SimulationModelGenerator):
         self.file.write("        est[i].push_back(0.0);\n")  # Initialize with 0.0
         self.file.write("    }\n")
 
-        for symbol, value in self.initial_state.items():
+        for symbol, value in self.initial_conditions.items():
             self.file.write(f"    est[{self.var_identifiers[symbol]}][0] = {value};\n")
 
         self.file.write("    int steps = static_cast<int>((tf - t0) / dt);\n")
