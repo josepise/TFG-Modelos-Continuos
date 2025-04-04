@@ -203,8 +203,7 @@ class PythonSimulationGenerator(SimulationModelGenerator):
         self.file.write("    for i in range(n_equations):\n")
         self.file.write("        est[i].append(inp[i] + hh / 6 * (k[i][0] + 2 * k[i][1] + 2 * k[i][2] + k[i][3]))\n")
         self.file.write("\n\n")
-
-
+    
 
     def write_simulation(self):
         self.file.write("def simulation():\n")

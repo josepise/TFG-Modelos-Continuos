@@ -9,6 +9,13 @@ class Condition:
         self.right_value = ""               # Pueden ser número o Equations.
         self.avaliable_operators = ["<", "<=", ">", ">=", "==", "!="] # Lista de operadores disponibles.
         self.selected_operator = ""           # Este objeto siempre será un string.
+    
+    def __init__(self, left_condition, right_text_condition, selected_operator):
+        #Inicializamos los valores de la condición.
+        self.left_condition = left_condition                # Este objeto siempre será una expresión de SymPy.
+        self.right_condition = right_text_condition         # Este objeto puede ser o un número o una expresión de SymPy.
+        self.avaliable_operators = ["<", "<=", ">", ">=", "==", "!="]
+        self.selected_operator = selected_operator                   # Este objeto siempre será un string.
 
     def add_condition(self, left_condition, right_text_condition, selected_operator):
         self.left_condition = left_condition                # Este objeto siempre será una expresión de SymPy.
@@ -37,5 +44,5 @@ class Condition:
         #Devuelve la condición en forma de string utilizando la función sp.latex().
         #Mirar notas sobre como devolver este campo.
 
-        return sp.latex(self.left_condition) + self.operator + sp.latex(self.right_condition)
+        return sp.latex(self.left_condition) + self.selected_operator + sp.latex(self.right_condition)
     

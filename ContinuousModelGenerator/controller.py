@@ -23,4 +23,49 @@ class GeneratorController:
         self.view.update_translator_type(self.model.get_translator_type())     #Actualiza el tipo de traductor en la vista
         self.view.update_terminal(self.model.get_translator_type())            #Actualiza la terminal con el tipo de traductor
     
+    def delete_equation(self, equation):
+        self.model.delete_equation(equation)                                   #Elimina la ecuación del modelo
+        self.view.update_terminal(self.model.get_equations())                  #Actualiza la terminal con la ecuación eliminada
+        self.view.update_equation_list(self.model.get_equations())             #Actualiza la lista de ecuaciones en la vista
+        self.view.update_conditions_list(self.model.get_conditions())          #Actualiza la lista de condiciones en la vista
+        self.view.update_initial_conditions_list(self.model.get_initial_conditions())
+        self.view.update_time_range(self.model.get_time_range())               #Actualiza el rango de tiempo en la vista
+        self.view.update_file_name(self.model.get_file_name())                 #Actualiza el nombre del archivo en la vista
+        self.view.update_method(self.model.get_method())                       #Actualiza el método numérico en la vista
+        self.view.update_translator_type(self.model.get_translator_type())     #Actualiza el tipo de traductor en la vista
     
+    def edit_equation(self, equation):
+        self.model.edit_equation(equation)                                     #Edita la ecuación en el modelo
+        self.view.update_terminal(self.model.get_equations())                  #Actualiza la terminal con la ecuación editada
+        self.view.update_equation_list(self.model.get_equations())             #Actualiza la lista de ecuaciones en la vista
+        self.view.update_conditions_list(self.model.get_conditions())          #Actualiza la lista de condiciones en la vista
+        self.view.update_initial_conditions_list(self.model.get_initial_conditions())
+        self.view.update_time_range(self.model.get_time_range())               #Actualiza el rango de tiempo en la vista
+        self.view.update_file_name(self.model.get_file_name())                 #Actualiza el nombre del archivo en la vista
+        self.view.update_method(self.model.get_method())                       #Actualiza el método numérico en la vista
+        self.view.update_translator_type(self.model.get_translator_type())     #Actualiza el tipo de traductor en la vista
+    
+    def clear_fields(self):
+        self.view.clear_input()                                                 #Limpia el campo de entrada
+        self.view.update_terminal(self.model.get_equations())                   #Actualiza la terminal con la ecuación eliminada
+        self.view.update_equation_list(self.model.get_equations())             #Actualiza la lista de ecuaciones en la vista
+        self.view.update_conditions_list(self.model.get_conditions())          #Actualiza la lista de condiciones en la vista
+        self.view.update_initial_conditions_list(self.model.get_initial_conditions())
+        self.view.update_time_range(self.model.get_time_range())               #Actualiza el rango de tiempo en la vista
+        self.view.update_file_name(self.model.get_file_name())                 #Actualiza el nombre del archivo en la vista
+        self.view.update_method(self.model.get_method())                       #Actualiza el método numérico en la vista
+        self.view.update_translator_type(self.model.get_translator_type())     #Actualiza el tipo de traductor en la vista
+    
+    def generate_simulation(self):
+        self.model.generate_file()                                              #Genera el archivo de salida
+        self.view.update_terminal(self.model.get_equations())                   #Actualiza la terminal con la ecuación generada
+        self.view.update_equation_list(self.model.get_equations())             #Actualiza la lista de ecuaciones en la vista
+        self.view.update_conditions_list(self.model.get_conditions())          #Actualiza la lista de condiciones en la vista
+        self.view.update_initial_conditions_list(self.model.get_initial_conditions())
+        self.view.update_time_range(self.model.get_time_range())               #Actualiza el rango de tiempo en la vista
+        self.view.update_file_name(self.model.get_file_name())                 #Actualiza el nombre del archivo en la vista
+        self.view.update_method(self.model.get_method())                       #Actualiza el método numérico en la vista
+        self.view.update_translator_type(self.model.get_translator_type())     #Actualiza el tipo de traductor en la vista
+    
+    def set_conditions(self, conditions):
+        
