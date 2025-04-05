@@ -1,3 +1,4 @@
 ContinuousModelContinuousModelGenerator.egg-info/
 models/
-__pycache__/
+ContinuousModelContinuousModelGenerator/__pycache__
+translators/__pycache__

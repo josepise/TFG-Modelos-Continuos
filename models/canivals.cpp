@@ -7,17 +7,19 @@ using namespace std;
 
 const int n_equations = 4;
 
+long double tol = 1e-6; // Tolerance for RKF45
 // Model parameters
-const double a = 2;
+const long double a = 2;
 
-const double t0 = 0;
-const double tf = 10;
-const double dt = 0.1;
+const long double t0 = 0;
+const long double tf = 10;
+const long double dt = 0.1;
+vector<long double> t = {t0};
 
-vector<vector<double>> est(n_equations);
+vector<vector<long double>> est(n_equations);
 
-vector<double> deriv(const vector<double>& inp) {
-    vector<double> out(n_equations);
+vector<long double> deriv(const vector<long double>& inp) {
+    vector<long double> out(n_equations);
     out[0] = a*inp[2] - inp[0]*inp[1] - inp[0];
     out[1] = inp[0] - inp[1]*inp[3] - inp[1];
     out[2] = inp[1] - inp[2]*inp[3] - inp[3];
@@ -25,25 +27,47 @@ vector<double> deriv(const vector<double>& inp) {
     return out;
 }
 
-void one_step_runge_kutta_4(double hh, int step) {
-    vector<double> inp(n_equations);
-    for (int i = 0; i < n_equations; ++i) {
-        inp[i] = est[i][step - 1];
-    }
-    vector<vector<double>> k(4, vector<double>(n_equations));
-    for (int j = 0; j < 4; ++j) {
-        vector<double> out = deriv(inp);
-        for (int i = 0; i < n_equations; ++i) {
-            k[j][i] = out[i];
+void rkf45_step(long double tt, const vector<long double>& inp, long double hh, vector<long double>& y5, long double& error) {
+    const long double a[] = {0, 1.0/4, 3.0/8, 12.0/13, 1.0, 1.0/2};
+    const long double b[6][5] = {
+        {0, 0, 0, 0, 0},
+        {1.0/4, 0, 0, 0, 0},
+        {3.0/32, 9.0/32, 0, 0, 0},
+        {1932.0/2197, -7200.0/2197, 7296.0/2197, 0, 0},
+        {439.0/216, -8.0, 3680.0/513, -845.0/4104, 0},
+        {-8.0/27, 2.0, -3544.0/2565, 1859.0/4104, -11.0/40}
+    };
+    const long double c4[] = {25.0/216, 0, 1408.0/2565, 2197.0/4104, -1.0/5, 0};
+    const long double c5[] = {16.0/135, 0, 6656.0/12825, 28561.0/56430, -9.0/50, 2.0/55};
+
+    vector<vector<long double>> k(6, vector<long double>(n_equations));
+    for (int i = 0; i < 6; ++i) {
+        vector<long double> y_temp(n_equations);
+        for (int j = 0; j < n_equations; ++j) {
+            y_temp[j] = inp[j];
+            for (int m = 0; m < i; ++m) {
+                y_temp[j] += hh * b[i][m] * k[m][j];
+            }
         }
-        double incr = (j < 2) ? hh / 2 : hh;
-        for (int i = 0; i < n_equations; ++i) {
-            inp[i] = est[i][step - 1] + k[j][i] * incr;
+        k[i] = deriv(y_temp);
+    }
+
+    vector<long double> y4(n_equations);
+    y5.resize(n_equations);
+    for (int j = 0; j < n_equations; ++j) {
+        y4[j] = inp[j];
+        y5[j] = inp[j];
+        for (int i = 0; i < 6; ++i) {
+            y4[j] += hh * c4[i] * k[i][j];
+            y5[j] += hh * c5[i] * k[i][j];
         }
     }
-    for (int i = 0; i < n_equations; ++i) {
-        est[i].push_back(est[i][step - 1] + hh / 6 * (k[0][i] + 2 * k[1][i] + 2 * k[2][i] + k[3][i]));
+
+    error = 0.0;
+    for (int j = 0; j < n_equations; ++j) {
+        error += pow(y5[j] - y4[j], 2);
     }
+    error = sqrt(error);
 }
 
 int main() {
@@ -54,20 +78,42 @@ int main() {
     est[1][0] = 0;
     est[3][0] = 0;
     est[2][0] = 0;
-    int steps = static_cast<int>((tf - t0) / dt);
-    for (int i = 1; i <= steps; ++i) {
-        one_step_runge_kutta_4(dt, i);
+    long double h = dt;
+    while (t.back() < tf) {
+       vector<long double> inp(n_equations);
+       vector<long double> y_new;
+       long double error;
+
+       for (int i = 0; i < n_equations; ++i) {
+           inp[i] = est[i].back();
+       }
+
+       rkf45_step(t.back(), inp, h, y_new, error);
+
+       if (error <= tol) {
+           t.push_back(t.back() + h);
+           for (int i = 0; i < n_equations; ++i) {
+               est[i].push_back(y_new[i]);
+           }
+       }
+
+       // Adjust the step size
+       if (error < 1e-16)
+           error=1e-16;
+
+       h *= min(5.0, max(0.2, 0.84 * pow(tol / error, 0.25)));
+       h = min(h, tf - t.back());
     }
     // Save the results to a CSV file
-    ofstream results("results.csv");
+    ofstream results("canivals_output_cpp.csv");
     results << "Time";
     results << ", p_1";
     results << ", p_2";
     results << ", p_4";
     results << ", p_3";
     results << endl;
-    for (int i = 0; i <= steps; ++i) {
-        results << t0 + i * dt;
+    for (size_t i = 0; i < est[0].size(); ++i) {
+        results << t[i];
         for (int j = 0; j < n_equations; ++j) {
             results << "	 " << est[j][i];
         }

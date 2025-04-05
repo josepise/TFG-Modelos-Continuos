@@ -25,6 +25,8 @@ class CppSimulationGenerator(SimulationModelGenerator):
             self.write_euler_method()
         elif self.numerical_method == "runge-kutta-4":
             self.write_runge_kutta_4_method()
+        elif self.numerical_method == "runge-kutta-fehlberg":
+            self.write_runge_kutta_fehlberg_method()
 
         self.write_main()
 
@@ -40,6 +42,10 @@ class CppSimulationGenerator(SimulationModelGenerator):
     def write_model_parameters(self):
         # Add the number of equations
         self.file.write(f"const int n_equations = {len(self.equations)};\n\n")
+
+        if self.numerical_method == "runge-kutta-fehlberg":
+            self.file.write("double tol = 1e-6; // Tolerance for RKF45\n")
+            
 
         # Add constants for the equations
         self.file.write("// Model parameters\n")
@@ -59,6 +65,8 @@ class CppSimulationGenerator(SimulationModelGenerator):
         self.file.write(f"const double t0 = {self.simulation_time[0]};\n")
         self.file.write(f"const double tf = {self.simulation_time[1]};\n")
         self.file.write(f"const double dt = {self.simulation_time[2]};\n")
+        if self.numerical_method == "runge-kutta-fehlberg":
+            self.file.write("vector<double> t = {t0};\n")
         self.file.write("\n")
 
         # Add storage for results
@@ -128,6 +136,52 @@ class CppSimulationGenerator(SimulationModelGenerator):
         self.file.write("    }\n")
         self.file.write("}\n\n")
 
+    def write_runge_kutta_fehlberg_method(self):
+        # Write the Runge-Kutta-Fehlberg method (RKF45)
+        self.file.write("void rkf45_step(double tt, const vector<double>& inp, double hh, vector<double>& y5, double& error) {\n")
+        self.file.write("    const double a[] = {0, 1.0/4, 3.0/8, 12.0/13, 1.0, 1.0/2};\n")
+        self.file.write("    const double b[6][5] = {\n")
+        self.file.write("        {0, 0, 0, 0, 0},\n")
+        self.file.write("        {1.0/4, 0, 0, 0, 0},\n")
+        self.file.write("        {3.0/32, 9.0/32, 0, 0, 0},\n")
+        self.file.write("        {1932.0/2197, -7200.0/2197, 7296.0/2197, 0, 0},\n")
+        self.file.write("        {439.0/216, -8.0, 3680.0/513, -845.0/4104, 0},\n")
+        self.file.write("        {-8.0/27, 2.0, -3544.0/2565, 1859.0/4104, -11.0/40}\n")
+        self.file.write("    };\n")
+        self.file.write("    const double c4[] = {25.0/216, 0, 1408.0/2565, 2197.0/4104, -1.0/5, 0};\n")
+        self.file.write("    const double c5[] = {16.0/135, 0, 6656.0/12825, 28561.0/56430, -9.0/50, 2.0/55};\n")
+        self.file.write("\n")
+        self.file.write("    vector<vector<double>> k(6, vector<double>(n_equations));\n")
+        self.file.write("    for (int i = 0; i < 6; ++i) {\n")
+        self.file.write("        vector<double> y_temp(n_equations);\n")
+        self.file.write("        for (int j = 0; j < n_equations; ++j) {\n")
+        self.file.write("            y_temp[j] = inp[j];\n")
+        self.file.write("            for (int m = 0; m < i; ++m) {\n")
+        self.file.write("                y_temp[j] += hh * b[i][m] * k[m][j];\n")
+        self.file.write("            }\n")
+        self.file.write("        }\n")
+        self.file.write("        k[i] = deriv(y_temp);\n")
+        self.file.write("    }\n")
+        self.file.write("\n")
+        self.file.write("    vector<double> y4(n_equations);\n")
+        self.file.write("    y5.resize(n_equations);\n")
+        self.file.write("    for (int j = 0; j < n_equations; ++j) {\n")
+        self.file.write("        y4[j] = inp[j];\n")
+        self.file.write("        y5[j] = inp[j];\n")
+        self.file.write("        for (int i = 0; i < 6; ++i) {\n")
+        self.file.write("            y4[j] += hh * c4[i] * k[i][j];\n")
+        self.file.write("            y5[j] += hh * c5[i] * k[i][j];\n")
+        self.file.write("        }\n")
+        self.file.write("    }\n")
+        self.file.write("\n")
+        self.file.write("    error = 0.0;\n")
+        self.file.write("    for (int j = 0; j < n_equations; ++j) {\n")
+        self.file.write("        error += pow(y5[j] - y4[j], 2);\n")
+        self.file.write("    }\n")
+        self.file.write("    error = sqrt(error);\n")
+        self.file.write("}\n\n")
+
+
     def write_main(self):
         # Write the main function
         self.file.write("int main() {\n")
@@ -138,22 +192,64 @@ class CppSimulationGenerator(SimulationModelGenerator):
         for symbol, value in self.initial_conditions.items():
             self.file.write(f"    est[{self.var_identifiers[symbol]}][0] = {value};\n")
 
-        self.file.write("    int steps = static_cast<int>((tf - t0) / dt);\n")
-        self.file.write("    for (int i = 1; i <= steps; ++i) {\n")
+       
         if self.numerical_method == "euler":
+            self.file.write("    int steps = static_cast<int>((tf - t0) / dt);\n")
+            self.file.write("    for (int i = 1; i <= steps; ++i) {\n")
             self.file.write("        one_step_euler(dt, i);\n")
+            self.file.write("    }\n")
         elif self.numerical_method == "runge-kutta-4":
+            self.file.write("    int steps = static_cast<int>((tf - t0) / dt);\n")
+            self.file.write("    for (int i = 1; i <= steps; ++i) {\n")
             self.file.write("        one_step_runge_kutta_4(dt, i);\n")
-        self.file.write("    }\n")
+            self.file.write("    }\n")
+        elif self.numerical_method == "runge-kutta-fehlberg":
+            self.file.write("    double h = dt;\n")
+            self.file.write("    while (t.back() < tf) {\n")
+            self.file.write("       vector<double> inp(n_equations);\n")
+            self.file.write("       vector<double> y_new;\n")
+            self.file.write("       double error;\n\n")
+            self.file.write("       for (int i = 0; i < n_equations; ++i) {\n")
+            self.file.write("           inp[i] = est[i].back();\n")
+            self.file.write("       }\n")
+            self.file.write("\n")
+           
+            self.file.write("       rkf45_step(t.back(), inp, h, y_new, error);\n")
+            self.file.write("\n")
+            self.file.write("       if (error <= tol) {\n")
+            self.file.write("           t.push_back(t.back() + h);\n")
+            self.file.write("           for (int i = 0; i < n_equations; ++i) {\n")
+            self.file.write("               est[i].push_back(y_new[i]);\n")
+            self.file.write("           }\n")
+            self.file.write("       }\n")
+            self.file.write("\n")
+            self.file.write("       // Adjust the step size\n")
+            self.file.write("       if (error < 1e-16)\n")
+            self.file.write("           error=1e-16;\n\n")
+            self.file.write("       h *= min(5.0, max(0.2, 0.84 * pow(tol / error, 0.25)));\n")
+            self.file.write("       h = min(h, tf - t.back());\n")
+            self.file.write("    }\n")
+        
 
         self.file.write("    // Save the results to a CSV file\n")
-        self.file.write("    ofstream results(\"results.csv\");\n")
+        self.file.write(f"    ofstream results(\"{self.name_file}_output_cpp.csv\");\n")
         self.file.write("    results << \"Time\";\n")
+
+        # Añadimos los nombres de las variables al archivo CSV.
         for symbol, index in self.var_identifiers.items():
             self.file.write(f"    results << \", {symbol}\";\n")
         self.file.write("    results << endl;\n")
-        self.file.write("    for (int i = 0; i <= steps; ++i) {\n")
-        self.file.write("        results << t0 + i * dt;\n")
+       
+        #Escribimos los resultados en el archivo CSV en un caso
+        # según el método de integración utilizado ya que el método
+        # de Runge-Kutta-Fehlberg no tiene un número fijo de pasos.
+        if self.numerical_method == "runge-kutta-fehlberg":
+            self.file.write("    for (size_t i = 0; i < est[0].size(); ++i) {\n")
+            self.file.write("        results << t[i];\n")
+        else:
+            self.file.write("    for (int i = 0; i <= steps; ++i) {\n")
+            self.file.write("        results << t0 + i * dt;\n")
+        
         self.file.write("        for (int j = 0; j < n_equations; ++j) {\n")
         self.file.write("            results << \"\t \" << est[j][i];\n")
         self.file.write("        }\n")

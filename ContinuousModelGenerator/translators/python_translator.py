@@ -30,6 +30,8 @@ class PythonSimulationGenerator(SimulationModelGenerator):
             self.write_euler_improved_method()
         elif self.numerical_method == "runge-kutta-4":
             self.write_runge_kutta_4_method()
+        elif self.numerical_method == "runge-kutta-fehlberg":
+            self.write_runge_kutta_fehlberg_method()
 
         self.write_simulation()
         self.main()
@@ -44,6 +46,11 @@ class PythonSimulationGenerator(SimulationModelGenerator):
         
         #Añadimos una constante que contenga el número de ecuaciones.
         self.file.write("n_equations = " + str(len(self.equations)) + "\n\n")
+
+        #Añadimos la tolerancia del método de Runge-Kutta-Fehlberg solo
+        # en el caso de que .
+        if self.numerical_method == "runge-kutta-fehlberg":
+            self.file.write("tol = 1e-6\n")
 
         #Añadimos las constantes de las ecuaciones y sus valores.
         self.file.write("# Parámetros del modelo\n")
@@ -83,7 +90,14 @@ class PythonSimulationGenerator(SimulationModelGenerator):
         self.file.write(f"t0 = {self.simulation_time[0]}\n")
         self.file.write(f"tf = {self.simulation_time[1]}\n")
         self.file.write(f"dt = {self.simulation_time[2]}\n")
-        self.file.write("t = np.arange(t0, tf, dt)\n")
+        
+        #En caso de que el método de integración sea Runge-Kutta-Fehlberg
+        # añadimos la lista que contendrá los pasos de tiempo.
+        if self.numerical_method == "runge-kutta-fehlberg":
+            self.file.write("t=[t0]\n")
+        else:
+            self.file.write("t = np.arange(t0, tf, dt)\n")
+        
         self.file.write("\n\n")
 
     def write_initialization_method(self):
@@ -204,8 +218,33 @@ class PythonSimulationGenerator(SimulationModelGenerator):
         self.file.write("        est[i].append(inp[i] + hh / 6 * (k[i][0] + 2 * k[i][1] + 2 * k[i][2] + k[i][3]))\n")
         self.file.write("\n\n")
     
-    # def write_runge_kutta_fehlberg_method(self):
+    def write_runge_kutta_fehlberg_method(self):
 
+        self.file.write("def rkf45_step(tt, inp, hh):\n")
+        self.file.write("    a = [0, 1/4, 3/8, 12/13, 1, 1/2]\n")
+        self.file.write("    b = [\n")
+        self.file.write("        [0, 0, 0, 0, 0],\n")
+        self.file.write("        [1/4, 0, 0, 0, 0],\n")
+        self.file.write("        [3/32, 9/32, 0, 0, 0],\n")
+        self.file.write("        [1932/2197, -7200/2197, 7296/2197, 0, 0],\n")
+        self.file.write("        [439/216, -8, 3680/513, -845/4104, 0],\n")
+        self.file.write("        [-8/27, 2, -3544/2565, 1859/4104, -11/40]\n")
+        self.file.write("    ]\n")
+        self.file.write("    c4 = [25/216, 0, 1408/2565, 2197/4104, -1/5, 0]\n")
+        self.file.write("    c5 = [16/135, 0, 6656/12825, 28561/56430, -9/50, 2/55]\n")
+        self.file.write("    \n")
+        self.file.write("    k = []\n")
+        self.file.write("    for i in range(6):\n")
+        self.file.write("        y_temp = [inp[j] + hh * sum(b[i][m] * k[m][j] for m in range(i)) if i > 0 else inp[j] for j in range(n_equations)]\n")
+        self.file.write("        out=deriv(y_temp)\n")
+        self.file.write("        k.append(out)\n")
+        self.file.write("    \n")
+        self.file.write("    y4 = [inp[j] + hh * sum(c4[i] * k[i][j] for i in range(6)) for j in range(n_equations)]\n")
+        self.file.write("    y5 = [inp[j] + hh * sum(c5[i] * k[i][j] for i in range(6)) for j in range(n_equations)]\n")
+        self.file.write("    \n")
+        self.file.write("    error = np.linalg.norm(np.array(y5) - np.array(y4))\n")
+        self.file.write("    return y5, error\n")
+        self.file.write("\n\n")
 
     def write_simulation(self):
         self.file.write("def simulation():\n")
@@ -215,15 +254,37 @@ class PythonSimulationGenerator(SimulationModelGenerator):
         for i, symbol in enumerate(self.initial_conditions):
             self.file.write(f"\test[{self.var_identifiers[symbol]}].append({self.initial_conditions[symbol]})\n")
         
-        self.file.write("\n\tfor i in range(1, len(t)):\n")
-        self.file.write("\t\titeration += 1\n")
         
         if self.numerical_method == "euler":
+            self.file.write("\n\tfor i in range(1, len(t)):\n")
+            self.file.write("\t\titeration += 1\n")
             self.file.write("\t\tone_step_euler(t[i-1], dt, iteration)\n")
         elif self.numerical_method == "euler-improved":
+            self.file.write("\n\tfor i in range(1, len(t)):\n")
+            self.file.write("\t\titeration += 1\n")
             self.file.write("\t\tone_step_euler_improved(t[i-1], dt, iteration)\n")
         elif self.numerical_method == "runge-kutta-4":
+            self.file.write("\n\tfor i in range(1, len(t)):\n")
+            self.file.write("\t\titeration += 1\n")
             self.file.write("\t\tone_step_runge_kutta_4(t[i-1], dt, iteration)\n")
+        elif self.numerical_method == "runge-kutta-fehlberg":
+            self.file.write("\th = dt\n")
+            self.file.write("\twhile t[-1] < tf:\n")
+            self.file.write("\t\tinp = [est[i][-1] for i in range(n_equations)]\n")
+            self.file.write("\t\ty_new, error = rkf45_step(t[-1], inp, h)\n")
+            self.file.write("\t\t\n")
+            self.file.write("\t\tif error <= tol:\n")
+            self.file.write("\t\t\tt.append(t[-1] + h)\n")
+            self.file.write("\t\t\tfor i in range(n_equations):\n")
+            self.file.write("\t\t\t\test[i].append(y_new[i])\n")
+            self.file.write("\t\t\n")
+            self.file.write("\t\tif(error > 0):\n")
+            self.file.write("\t\t\th *= min(5, max(0.2, 0.84 * (tol / error) ** 0.25))\n")
+            self.file.write("\t\telse:\n")
+            self.file.write("\t\t\th *= 5\n")
+            self.file.write("\t\t\n")
+            self.file.write("\t\th=min(h, tf - t[-1])\n")
+
 
         self.file.write("\n\n")
 
@@ -250,7 +311,12 @@ class PythonSimulationGenerator(SimulationModelGenerator):
     def write_results(self):
         # Añadimos la salida de las variables en el archivo.
         self.file.write("\t# Guardamos los resultados en un archivo de texto\n")
-        self.file.write("\twith open('results.csv', 'w') as f:\n")
+        self.file.write(f"\twith open('{self.name_file}_output_py.csv', 'w') as f:\n")
+        self.file.write("\t\t# Escribimos la cabecera del archivo\n")
+        self.file.write("\t\tf.write('t\t')\n")
+        for symbol in self.var_identifiers.keys():
+            self.file.write(f"\t\tf.write('{symbol}\\t')\n")
+        self.file.write("\t\tf.write('\\n')\n")
         self.file.write("\t\tfor i in range(len(t)):\n")
         self.file.write("\t\t\tf.write(f'{t[i]} ")
         
