@@ -2,18 +2,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-n_equations = 1
+n_equations = 2
 
 # Parámetros del modelo
-k = 1
-T = 1
-p = 9
-v_e=20
-v_r=29
-u_t = 0
+a = 1
+b = 3
+
 
 iteration = 0
-est = [[]]
+est = [[], []]
 
 
 t0 = 0
@@ -23,15 +20,10 @@ t = np.arange(t0, tf, dt)
 
 
 def deriv(inp):
-    global u_t
-    if v_r-(inp[0]+v_e)  < 1:
-        u_t = 0
-    elif v_r-(inp[0]+v_e) > 1:
-        u_t = 1
+	x=a + inp[0]**2*inp[1] - inp[0]*(b + 1)
+	y=b*inp[0] - inp[0]**2*inp[1]
 
-    v_w=-inp[0]/T + k*p*u_t/T
-    
-    return [v_w]
+	return [x, y]
 
 
 def one_step_runge_kutta_4(tt, hh, paso):
@@ -54,7 +46,8 @@ def one_step_runge_kutta_4(tt, hh, paso):
 
 def simulation():
 	global iteration
-	est[0].append(0)
+	est[0].append(2)
+	est[1].append(1)
 
 	for i in range(1, len(t)):
 		iteration += 1
@@ -62,12 +55,10 @@ def simulation():
 
 
 if __name__ == '__main__':
-    simulation()
-    #sumamos la temperatura del entorno al resultado
-    for i in range(len(est[0])):
-        est[0][i] += v_e
+	simulation()
 
-    plt.plot(t, est[0], label='v_w')
-    plt.show()
+	plt.plot(t, est[0], label='x')
+	plt.plot(t, est[1], label='y')
+	plt.show()
 
 

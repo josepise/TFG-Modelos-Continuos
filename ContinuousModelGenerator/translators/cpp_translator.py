@@ -1,6 +1,7 @@
 from .translator import SimulationModelGenerator
 from ..equation import Equation
 import sympy as sp
+import re
 import os
 
 class CppSimulationGenerator(SimulationModelGenerator):
@@ -8,6 +9,7 @@ class CppSimulationGenerator(SimulationModelGenerator):
     def __init__(self, equations, conditionals, initial_state, simulation_time, name_file, numerical_method="euler"):
         super().__init__(equations, conditionals, initial_state, simulation_time, name_file, numerical_method)
         self.operators = {"sin": "std::sin", "cos": "std::cos", "tan": "std::tan", "exp": "std::exp", "log": "std::log", "sqrt": "std::sqrt"}
+        self.pattern_pow = r'([a-zA-Z_][a-zA-Z_0-9]*(?:\[[^\]]+\])?|\(.+?\))\s*\*\*\s*(\d+(?:\.\d+)?)'
 
     def generate_file(self):
         # Create the C++ simulation file in the folder ./models/
@@ -30,6 +32,19 @@ class CppSimulationGenerator(SimulationModelGenerator):
 
         self.write_main()
 
+    def prepare_equations(self, equation, subs_dict):
+        # Reemplazamos las variables por su cadena inp y el índice correspondiente.
+        eq = equation.get_equation().subs(subs_dict)
+
+        # Sustituimos las expresiones x**n a pow(x,n)            
+        eq = re.sub(self.pattern_pow, r'pow(\1, \2)', str(eq))
+
+        # Reemplazamos los operadores por los correspondientes en C++.
+        for operator, replacement in self.operators.items():
+            eq = eq.replace(operator, replacement)
+
+        return eq
+
     def write_head_file(self):
         # Add necessary includes
         self.file.write("#include <iostream>\n")
@@ -47,18 +62,24 @@ class CppSimulationGenerator(SimulationModelGenerator):
             self.file.write("double tol = 1e-6; // Tolerance for RKF45\n")
             
 
-        # Add constants for the equations
+        # Añadimos las constantes de las ecuaciones y sus valores.
         self.file.write("// Model parameters\n")
+        list_constants = []                         #Lista para comprobar si la constante ya ha sido añadida al archivo.
         for equation in self.equations:
             constant_values = equation.get_constants_values()
+            #Comprobamos si hay mas de una constante y las añadimos al archivo.
             try:
                 for constant in equation.get_constants():
-                    value = constant_values[str(constant)]
-                    self.file.write(f"const double {constant} = {value};\n")
+                    if constant not in list_constants:
+                        list_constants.append(constant)
+                        value = constant_values[str(constant)]  #Convertimos la constante en una cadena
+                        self.file.write(f"const double {constant} = {value};\n")
             except:
                 constant = equation.get_constants()
-                value = constant_values[str(constant)]
-                self.file.write(f"const double {constant} = {value};\n")
+                if constant not in list_constants:
+                    list_constants.append(constant)
+                    value = constant_values[str(constant)]
+                    self.file.write(f"const double {constant} = {value};\n")
         self.file.write("\n")
 
         # Add simulation time parameters
@@ -87,13 +108,8 @@ class CppSimulationGenerator(SimulationModelGenerator):
             except:
                 subs_dict = {str(symbols): sp.Symbol(f'inp[{self.var_identifiers[str(symbols)]}]')}
 
-            
-            eq = equation.get_equation().subs(subs_dict)            
-            eq = str(eq)
-
-            for operator, replacement in self.operators.items():
-                eq = eq.replace(operator, replacement)
-
+            eq= self.prepare_equations(equation, subs_dict)
+    
             self.file.write(f"    out[{i}] = {eq};\n")
            
 

@@ -1,92 +1,86 @@
-import tkinter as tk
-from tkinter import messagebox
-import subprocess
+import numpy as np
+import matplotlib.pyplot as plt
 
-# --- Funciones del Menú ---
-def nuevo_archivo():
-    terminal.insert(tk.END, "> Nuevo archivo creado.\n")
+
+n_equations = 2
+
+tol = 1e-6
+# Parámetros del modelo
+k = 0.2
+r = 0.1
+d = 0
+
+
+iteration = 0
+est = [[], []]
+
+
+t0 = 0
+tf = 50
+dt = 0.1
+t=[t0]
+
+
+def deriv(inp):
+	a=-inp[0]**3*k + inp[0]*inp[1]*r
+	b=-d*inp[1] + inp[0]**3*k - inp[0]*inp[1]*r
+
+	return [a, b]
+
+
+def rkf45_step(tt, inp, hh):
+    a = [0, 1/4, 3/8, 12/13, 1, 1/2]
+    b = [
+        [0, 0, 0, 0, 0],
+        [1/4, 0, 0, 0, 0],
+        [3/32, 9/32, 0, 0, 0],
+        [1932/2197, -7200/2197, 7296/2197, 0, 0],
+        [439/216, -8, 3680/513, -845/4104, 0],
+        [-8/27, 2, -3544/2565, 1859/4104, -11/40]
+    ]
+    c4 = [25/216, 0, 1408/2565, 2197/4104, -1/5, 0]
+    c5 = [16/135, 0, 6656/12825, 28561/56430, -9/50, 2/55]
     
-def abrir_archivo():
-    terminal.insert(tk.END, "> Abrir archivo.\n")
-
-def guardar_archivo():
-    terminal.insert(tk.END, "> Archivo guardado.\n")
-
-def cortar():
-    terminal.insert(tk.END, "> Cortar texto.\n")
-
-def copiar():
-    terminal.insert(tk.END, "> Copiar texto.\n")
-
-def pegar():
-    terminal.insert(tk.END, "> Pegar texto.\n")
-
-def configurar_pagina():
-    terminal.insert(tk.END, "> Configurando la página.\n")
-
-def cambiar_margen():
-    terminal.insert(tk.END, "> Cambiando márgenes.\n")
-
-# --- Función para ejecutar comandos en la terminal ---
-def ejecutar_comando(event=None):
-    comando = entrada.get()
-    if comando.lower() == "exit":
-        root.destroy()
-        return
-
-    entrada.delete(0, tk.END)
+    k = []
+    for i in range(6):
+        y_temp = [inp[j] + hh * sum(b[i][m] * k[m][j] for m in range(i)) if i > 0 else inp[j] for j in range(n_equations)]
+        out=deriv(y_temp)
+        k.append(out)
     
-    try:
-        salida = subprocess.check_output(comando, shell=True, stderr=subprocess.STDOUT, text=True)
-    except subprocess.CalledProcessError as e:
-        salida = e.output
+    y4 = [inp[j] + hh * sum(c4[i] * k[i][j] for i in range(6)) for j in range(n_equations)]
+    y5 = [inp[j] + hh * sum(c5[i] * k[i][j] for i in range(6)) for j in range(n_equations)]
+    
+    error = np.linalg.norm(np.array(y5) - np.array(y4))
+    return y5, error
 
-    terminal.insert(tk.END, f"> {comando}\n{salida}\n")
-    terminal.see(tk.END)
 
-# --- Crear la ventana principal ---
-root = tk.Tk()
-root.title("Menú y Terminal en Tkinter")
-root.geometry("600x400")
+def simulation():
+	global iteration
+	est[0].append(1)
+	est[1].append(0)
+	h = dt
+	while t[-1] < tf:
+		inp = [est[i][-1] for i in range(n_equations)]
+		y_new, error = rkf45_step(t[-1], inp, h)
+		
+		if error <= tol:
+			t.append(t[-1] + h)
+			for i in range(n_equations):
+				est[i].append(y_new[i])
+		
+		if(error > 0):
+			h *= min(5, max(0.2, 0.84 * (tol / error) ** 0.25))
+		else:
+			h *= 5
+		
+		h=min(h, tf - t[-1])
 
-# --- Crear la barra de menú ---
-menu_bar = tk.Menu(root)
 
-# Menú Archivo
-menu_archivo = tk.Menu(menu_bar, tearoff=0)
-menu_archivo.add_command(label="Nuevo", command=nuevo_archivo)
-menu_archivo.add_command(label="Abrir", command=abrir_archivo)
-menu_archivo.add_command(label="Guardar", command=guardar_archivo)
-menu_archivo.add_separator()
-menu_archivo.add_command(label="Salir", command=root.quit)
+if __name__ == '__main__':
+	simulation()
 
-# Menú Editar
-menu_editar = tk.Menu(menu_bar, tearoff=0)
-menu_editar.add_command(label="Cortar", command=cortar)
-menu_editar.add_command(label="Copiar", command=copiar)
-menu_editar.add_command(label="Pegar", command=pegar)
+	plt.plot(t, est[0], label='a')
+	plt.plot(t, est[1], label='b')
+	plt.show()
 
-# Menú Diseño de Página
-menu_diseno = tk.Menu(menu_bar, tearoff=0)
-menu_diseno.add_command(label="Configurar página", command=configurar_pagina)
-menu_diseno.add_command(label="Cambiar márgenes", command=cambiar_margen)
 
-# Agregar los menús a la barra de menú
-menu_bar.add_cascade(label="Archivo", menu=menu_archivo)
-menu_bar.add_cascade(label="Editar", menu=menu_editar)
-menu_bar.add_cascade(label="Diseño de Página", menu=menu_diseno)
-
-# Asignar la barra de menú a la ventana
-root.config(menu=menu_bar)
-
-# --- Crear el área de terminal ---
-terminal = tk.Text(root, bg="black", fg="white", font=("Consolas", 12))
-terminal.pack(expand=True, fill="both")
-
-# Crear la entrada de comandos
-entrada = tk.Entry(root, bg="black", fg="white", font=("Consolas", 12))
-entrada.pack(fill="x")
-entrada.bind("<Return>", ejecutar_comando)  # Ejecutar al presionar Enter
-
-# Ejecutar la aplicación
-root.mainloop()

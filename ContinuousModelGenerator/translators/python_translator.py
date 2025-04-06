@@ -189,13 +189,15 @@ class PythonSimulationGenerator(SimulationModelGenerator):
         #Añadimos el metodo de Euler mejorado para resolver las ecuaciones.
         self.file.write("def one_step_euler_improved(tt, hh, paso):\n")
         self.file.write("    inp = [est[i][paso-1] for i in range(n_equations)]\n")
-        self.file.write("    out=deriv(inp)\n")
+        self.file.write("    out = [est[i][paso-1] for i in range(n_equations)]\n")
+        self.file.write("    k = [[] for _ in range(n_equations)]\n")
+        self.file.write("    for j in range(2):\n")
+        self.file.write("       out=deriv(out)\n")
+        self.file.write("       for i in range(n_equations):\n")
+        self.file.write("           k[i].append(out[i])\n")
+        self.file.write("           out[i]=inp[i] + k[i][j] * hh\n")
         self.file.write("    for i in range(n_equations):\n")
-        self.file.write("        est[i].append(inp[i] + (hh * out[i]))\n")
-        self.file.write("    inp = [est[i][paso] for i in range(n_equations)]\n")
-        self.file.write("    out=deriv(inp)\n")
-        self.file.write("    for i in range(n_equations):\n")
-        self.file.write("        est[i][paso] = est[i][paso-1] + (hh * out[i])\n")
+        self.file.write("        est[i].append(inp[i] + hh*(k[i][0]+k[i][1])/2)\n")
         self.file.write("\n\n")
 
     def write_runge_kutta_4_method(self):
