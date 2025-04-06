@@ -1,5 +1,4 @@
-ContinuousModelContinuousModelGenerator.egg-info/
+ContinuousModelGenerator/__pycache__
 models/
-ContinuousModelContinuousModelGenerator/__pycache__
-ContinuousModelContinuousModelGenerator/translators/__pycache__
+ContinuousModelGenerator/translators/__pycache__
 *.csv
