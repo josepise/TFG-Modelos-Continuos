@@ -93,7 +93,22 @@ class SimulationModelGenerator(ABC):
                     self.var_identifiers[symbol] = index_var
                     index_var += 1
     
+    def check_equations_conditions(self):
+        """
+        Comprueba que las condiciones contengan variables definidas en las ecuaciones.
+        """
+
+        # Creamos un conjunto de variables definidas en las ecuaciones.
+        variables_equations = set()
+
+        for equation in self.equations:
+            variables_equations.update(equation.get_simbol())
         
+        # Iteramos sobre las condiciones y comprobamos si contienen variables no definidas.
+        for condition in self.conditionals:
+            for symbol in condition.get_simbol():
+                if symbol not in variables_equations:
+                    raise ValueError(f"La variable {symbol} no está definida en las ecuaciones.")
 
 
 

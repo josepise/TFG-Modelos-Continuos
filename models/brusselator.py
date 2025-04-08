@@ -2,11 +2,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-n_equations = 2
+n_equations = 1
 
 # Parámetros del modelo
-a = 1
-b = 3
+k = 1
+T = 1
+p = 50
 
 
 iteration = 0
@@ -20,10 +21,9 @@ t = np.arange(t0, tf, dt)
 
 
 def deriv(inp):
-	x=a + inp[0]**2*inp[1] - inp[0]*(b + 1)
-	y=b*inp[0] - inp[0]**2*inp[1]
+	v_w=-inp[0]/T + inp[1]*k*p/T
 
-	return [x, y]
+	return [v_w, ]
 
 
 def one_step_runge_kutta_4(tt, hh, paso):
@@ -46,8 +46,9 @@ def one_step_runge_kutta_4(tt, hh, paso):
 
 def simulation():
 	global iteration
-	est[0].append(2)
-	est[1].append(1)
+	#Condiciones iniciales
+	est[0].append(0)                             	 #v_w
+	est[1].append(0)                             	 #u_t
 
 	for i in range(1, len(t)):
 		iteration += 1
@@ -57,8 +58,8 @@ def simulation():
 if __name__ == '__main__':
 	simulation()
 
-	plt.plot(t, est[0], label='x')
-	plt.plot(t, est[1], label='y')
+	plt.plot(t, est[0], label='v_w')
+	plt.plot(t, est[1], label='u_t')
 	plt.show()
 
 

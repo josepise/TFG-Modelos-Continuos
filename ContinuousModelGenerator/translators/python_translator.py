@@ -55,25 +55,32 @@ class PythonSimulationGenerator(SimulationModelGenerator):
         #Añadimos las constantes de las ecuaciones y sus valores.
         self.file.write("# Parámetros del modelo\n")
 
+
+        #Lista que contendrá los nombres de las constantes ya añadidas.
         list_constants = []
-        for equation in self.equations:
-            constant_values = equation.get_constants_values()
+
+        #Unimos ambas listas ya que nos es mas facil 
+        # recorrerlas juntas.
+        eq_conds= self.equations+self.conditionals
+        
+
+        for exp in  eq_conds:
+            constant_values = exp.get_constants_values()
 
             # Comprobamos si hay mas de una constante y las añadimos al archivo.
             # En caso de que haya una sola constante, la añadimos directamente.
             try:
-                for constant in equation.get_constants():
+                for constant in exp.get_constants():
                     if constant not in list_constants:
                         list_constants.append(constant)
-                        value = constant_values[str(constant)]  # Convertimos la constante a string si es necesario
+                        value = constant_values[str(constant)]  
                         self.file.write(f"{constant} = {value}\n")
             except:
-                
-                constant = equation.get_constants()
+                constant = exp.get_constants()
                 if constant not in list_constants:
                     list_constants.append(constant)
                     value = constant_values[str(constant)]
-                    self.file.write(f"{equation.get_constants()} = {value}\n")
+                    self.file.write(f"{exp.get_constants()} = {value}\n")
 
         self.file.write("\n\n")
 
@@ -117,10 +124,48 @@ class PythonSimulationGenerator(SimulationModelGenerator):
         self.file.write("\n\n")
 
 
+    def write_conditionals(self):
+        # Añadimos las condiciones que se aplicaran a las ecuaciones.
+        self.file.write("\t# Condiciones\n")
+        
+        # Declaramos los resultados de las condiciones como globales
+        list_results=[]
+        for condition in self.conditionals:
+            for result in condition.get_result():
+                if result.lhs not in list_results:
+                    list_results.append(result.lhs)
+                    self.file.write(f"\tglobal {result.lhs}\n")
+
+        for i, condition in enumerate(self.conditionals):
+            symbols = condition.get_symbols()
+            conds = condition.get_conditions()
+            results = condition.get_result()
+
+            try:
+                subs_dict = {str(sym): sp.Symbol(f'inp[{self.var_identifiers[str(sym)]}]') for sym in symbols}
+            except:
+                subs_dict = {str(symbols): sp.Symbol(f'inp[{self.var_identifiers[str(symbols)]}]')}
+
+
+            conds = [cond.subs(subs_dict) for cond in conds]
+            results = [res.subs(subs_dict) for res in results]
+        
+            conds = " and ".join([str(cond) for cond in conds])
+
+            self.file.write(f"\tif {conds}:\n")
+            for result in results:
+                self.file.write(f"\t\t{result.lhs}={result.rhs}\n")
+
+            self.file.write("\n")
+    
+            
+            
+
     def write_equations(self):
         #Escribimos la cabecera de la función que contendrá las ecuaciones.
         self.file.write("def deriv(inp):\n")
         
+        self.write_conditionals()
     
         #Añadimos las ecuaciones al archivo.
         for i,equation in enumerate(self.equations):
@@ -152,12 +197,6 @@ class PythonSimulationGenerator(SimulationModelGenerator):
         # Generamos la cadena que va a ser concatenada a la salida de la función deriv.
         cadena = ""
         
-        #Escribimos la salida de la función deriv en el mismo orden que queda descrita en
-        # var_identifiers.
-        # for var_name in self.var_identifiers.keys():
-        #     cadena += f"{var_name}"
-        #     if list(self.var_identifiers.keys()).index(var_name) < len(self.var_identifiers) - 1:
-        #         cadena += ", "
 
         # Escribmos el nombre de la ecuación como salida en el mismo orden que está en 
         # var_identifiers.
@@ -253,8 +292,10 @@ class PythonSimulationGenerator(SimulationModelGenerator):
         self.file.write("\tglobal iteration\n")
         
         #Añadimos las condiciones iniciales.
+        self.file.write("\t#Condiciones iniciales\n")
         for i, symbol in enumerate(self.initial_conditions):
-            self.file.write(f"\test[{self.var_identifiers[symbol]}].append({self.initial_conditions[symbol]})\n")
+            self.file.write(f"\test[{self.var_identifiers[symbol]}].append({self.initial_conditions[symbol]}) \
+                            \t #{symbol}\n")
         
         
         if self.numerical_method == "euler":
