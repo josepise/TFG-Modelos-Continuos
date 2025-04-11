@@ -58,6 +58,10 @@ class Condition:
         #Devuelve la lista de resultados.
         return self.result
     
+    def get_results_var(self):
+        #Devuelve la lista de variables que modifican su valor.
+        return [self.result[i].lhs for i in range(len(self.result))]
+
     def get_constants(self):
         #Devuelve el diccionario de constantes.
         return self.constants.keys()
@@ -65,6 +69,8 @@ class Condition:
     def get_constants_values(self):
         #Devuelve el diccionario de constantes.
         return self.constants
+    
+
 
     def show_condition(self):
         #Devuelve la condición en forma de string utilizando la función sp.latex().

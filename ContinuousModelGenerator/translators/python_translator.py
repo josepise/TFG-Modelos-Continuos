@@ -103,7 +103,7 @@ class PythonSimulationGenerator(SimulationModelGenerator):
         if self.numerical_method == "runge-kutta-fehlberg":
             self.file.write("t=[t0]\n")
         else:
-            self.file.write("t = np.arange(t0, tf, dt)\n")
+            self.file.write("t = np.arange(t0, tf+dt, dt)\n")
         
         self.file.write("\n\n")
 

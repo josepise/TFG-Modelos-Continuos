@@ -13,3 +13,4 @@ ContinuousModelGenerator.egg-info/top_level.txt
 ContinuousModelGenerator/translators/cpp_translator.py
 ContinuousModelGenerator/translators/python_translator.py
 ContinuousModelGenerator/translators/translator.py
+test/test_condition.py
