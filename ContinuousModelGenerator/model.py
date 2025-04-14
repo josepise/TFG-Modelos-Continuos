@@ -7,20 +7,8 @@ class ContinuousModelGenerator:
     """
     Clase para generar modelos continuos en Python y C++.
     """
-    def __init__(self):
-        """
-        Inicializa el ContinuousModelGenerator con parámetros predeterminados.
-        """
-        self.equations = []
-        self.conditions = []
-        self.initial_conditions = {}
-        self.time_range = [0, 1, 0.1]
-        self.file_name = "output"
-        self.translator_type = "python"
-        self.method = "euler"
-        self.translator = None
 
-    def __init__(self, equations,conditions, initial_conditions, time_range, file_name, translator_type, method):
+    def __init__(self):
         """
         Inicializa el ContinuousModelGenerator con los parámetros dados.
 
@@ -32,15 +20,15 @@ class ContinuousModelGenerator:
         :param translator_type: Tipo de traductor a usar (Python o C++).
         :param method: Método numérico para la simulación (por ejemplo, Runge-Kutta).
         """
-        self.equations = equations
-        self.conditions = conditions
-        self.initial_conditions = initial_conditions
-        self.time_range = time_range
-        self.file_name = file_name
-        self.translator_type = translator_type
-        self.method = method
+        self.equations = []
+        self.conditions = []
+        self.initial_conditions = None
+        self.time_range = None
+        self.file_name = None
+        self.translator_type = None
+        self.method = None
         self.translator = None
-        self.set_translator()
+        # self.set_translator()
 
     # Inicializa el traductor apropiado basado en el tipo de traductor
     def set_translator(self):
@@ -155,6 +143,11 @@ class ContinuousModelGenerator:
         self.check_components()
         self.translator.set_method(method)
 
+
+    def add_equation(self, text_equation, text_var,constant):
+        eq = Equation("a",text_equation, text_var, constant)
+        self.equations.append(eq)
+
     def check_components(self):
         """
         Verifica si los componentes son válidos.
@@ -201,4 +194,6 @@ class ContinuousModelGenerator:
         # Verifica el método numérico
         if self.method not in ["euler", "rk4"]:
             raise ValueError("El método numérico debe ser 'euler' o 'rk4'.")
+        
+    
 
