@@ -64,28 +64,23 @@ class CppSimulationGenerator(SimulationModelGenerator):
 
         # Añadimos las constantes de las ecuaciones y sus valores.
         self.file.write("// Model parameters\n")
-        list_constants = []                         #Lista para comprobar si la constante ya ha sido añadida al archivo.
+
+        #Lista para comprobar si la constante ya ha sido añadida al archivo.
+        list_constants = []      
+
+        #Lista para comprobar si la variable es un resultado de una condición.                   
         list_results_var = [str(var) for condition in self.conditionals for var in condition.get_results_var()]
         eq_conds= self.equations+self.conditionals
+        
         for equation in eq_conds:
             constant_values = equation.get_constants_values()  
-            try:
-                for constant in equation.get_constants():
-                    if constant not in list_constants:
-                        list_constants.append(constant)
-                        value = constant_values[str(constant)]
-                    
-                        if constant in list_results_var:  
-                            self.file.write(f"double {constant} = {value};\n")
-                        else:
-                            self.file.write(f"const double {constant} = {value};\n")
-            except:
-                constant = equation.get_constants()
+            
+            for constant in equation.get_constants():
                 if constant not in list_constants:
                     list_constants.append(constant)
                     value = constant_values[str(constant)]
-
-                    if constant in list_results_var:
+                
+                    if constant in list_results_var:  
                         self.file.write(f"double {constant} = {value};\n")
                     else:
                         self.file.write(f"const double {constant} = {value};\n")
@@ -106,17 +101,14 @@ class CppSimulationGenerator(SimulationModelGenerator):
 
     def write_conditionals(self):
         # Add the conditions that will be applied to the equations
-        self.file.write("// Conditions\n")
+        self.file.write("\t// Conditions\n")
         
         for i, condition in enumerate(self.conditionals):
             symbols = condition.get_symbols()
             conds = condition.get_conditions()
             results = condition.get_result()
 
-            try:
-                subs_dict = {str(sym): sp.Symbol(f'inp[{self.var_identifiers[str(sym)]}]') for sym in symbols}
-            except:
-                subs_dict = {str(symbols): sp.Symbol(f'inp[{self.var_identifiers[str(symbols)]}]')}
+            subs_dict = {str(sym): sp.Symbol(f'inp[{self.var_identifiers[str(sym)]}]') for sym in symbols}
 
             conds = [cond.subs(subs_dict) for cond in conds]
             results = [res.subs(subs_dict) for res in results]
@@ -138,12 +130,9 @@ class CppSimulationGenerator(SimulationModelGenerator):
         # Add equations
         for i, equation in enumerate(self.equations):
             
-            symbols = equation.get_simbol()
+            symbols = equation.get_symbol()
             
-            try:
-                subs_dict = {str(sym): sp.Symbol(f'inp[{self.var_identifiers[str(sym)]}]') for sym in symbols}
-            except:
-                subs_dict = {str(symbols): sp.Symbol(f'inp[{self.var_identifiers[str(symbols)]}]')}
+            subs_dict = {str(sym): sp.Symbol(f'inp[{self.var_identifiers[str(sym)]}]') for sym in symbols}
 
             eq= self.prepare_equations(equation, subs_dict)
     

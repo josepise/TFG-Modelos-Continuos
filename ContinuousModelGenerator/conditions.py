@@ -48,6 +48,9 @@ class Condition:
 
     def get_symbols(self):
         #Devuelve la lista de símbolos de la condición.
+        if type(self.variables) == sp.Symbol:
+            self.variables = [self.variables]
+            
         return self.variables
     
     def get_conditions(self):

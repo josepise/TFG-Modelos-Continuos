@@ -76,29 +76,20 @@ class JavaSimulationGenerator(SimulationModelGenerator):
         eq_conds = self.equations + self.conditionals
         for equation in eq_conds:
             constant_values = equation.get_constants_values()  
-            try:
-                for constant in equation.get_constants():
-                    if constant not in list_constants:
-                        list_constants.append(constant)
-                        value = constant_values[str(constant)]
-                    
-                        if constant in list_results_var:
-                            self.file.write(f"\tpublic static double {constant} = {value};\n")
-                        else:
-                            self.file.write(f"\tpublic static final double {constant} = {value};\n")
-                    
-                        
-            except:
-                constant = equation.get_constants()
+           
+            for constant in equation.get_constants():
                 if constant not in list_constants:
                     list_constants.append(constant)
                     value = constant_values[str(constant)]
                 
-                    if str(constant) in list_results_var:
+                    # Comprobamos si alguna de las constantes pueden llegar a cambiar de valor
+                    # en el transcurso de la simulación. En caso de ser así, no las declaramos 
+                    # como constantes.
+                    if constant in list_results_var:
                         self.file.write(f"\tpublic static double {constant} = {value};\n")
                     else:
-                        self.file.write(f"\tpublic static double {constant} = {value};\n")
-
+                        self.file.write(f"\tpublic static final double {constant} = {value};\n")
+                    
         self.file.write("\n")
 
         self.file.write(f"\tpublic static final double t0 = {self.simulation_time[0]};\n")
@@ -117,10 +108,7 @@ class JavaSimulationGenerator(SimulationModelGenerator):
             conds = condition.get_conditions()
             results = condition.get_result()
 
-            try:
-                subs_dict = {str(sym): sp.Symbol(f"inp.get({self.var_identifiers[str(sym)]})") for sym in symbols}
-            except:
-                subs_dict = {str(symbols): sp.Symbol(f"inp.get({self.var_identifiers[str(symbols)]})")}
+            subs_dict = {str(sym): sp.Symbol(f"inp.get({self.var_identifiers[str(sym)]})") for sym in symbols}
 
             conds = [cond.subs(subs_dict) for cond in conds]
             results = [res.subs(subs_dict) for res in results]
@@ -139,11 +127,9 @@ class JavaSimulationGenerator(SimulationModelGenerator):
         self.write_conditionals()
 
         for i, equation in enumerate(self.equations):
-            symbols = equation.get_simbol()
-            try:
-                subs_dict = {str(sym): sp.Symbol(f"inp.get({self.var_identifiers[str(sym)]})") for sym in symbols}
-            except:
-                subs_dict = {str(symbols): sp.Symbol(f"inp.get({self.var_identifiers[str(symbols)]})")}
+            symbols = equation.get_symbol()
+            
+            subs_dict = {str(sym): sp.Symbol(f"inp.get({self.var_identifiers[str(sym)]})") for sym in symbols}
 
             eq = self.prepare_equations(equation, subs_dict)
             self.file.write(f"\t\tout.set({i}, {eq});\n")

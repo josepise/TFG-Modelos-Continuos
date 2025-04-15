@@ -148,6 +148,17 @@ class ContinuousModelGenerator:
         eq = Equation("a",text_equation, text_var, constant)
         self.equations.append(eq)
 
+    def edit_equation(self, text_equation, text_var, constant, index):
+        """
+        Edita una ecuación existente en la lista de ecuaciones.
+        """
+        if index < 0 or index >= len(self.equations):
+            raise IndexError("Índice fuera de rango.")
+        
+        eq = Equation("a",text_equation, text_var, constant)
+        self.equations[index] = eq
+
+
     def check_components(self):
         """
         Verifica si los componentes son válidos.

@@ -75,12 +75,15 @@ class Equation:
         return self.constant_values.keys()
     
     def get_constants_values(self):
-        """Devuelve el diccionario de constantes con sus valores."""
+        """Devuelve el diccionario de constantes con sus valores."""        
         return self.constant_values
     
     
-    def get_simbol(self):
+    def get_symbol(self):
         """Devuelve los símbolos de la ecuación."""
+        if type(self.simbol) == sp.Symbol:
+            self.simbol = [self.simbol]
+
         return self.simbol
 
     def process_equations(self):

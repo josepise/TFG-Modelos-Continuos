@@ -1,4 +1,5 @@
 from .model import ContinuousModelGenerator as SimulationModel  #Importa la clase SimulationModel del archivo model.py
+from .equation import Equation  #Importa la clase Equation del archivo equation.py
 from .view import GUI as SimulationView  #Importa la clase SimulationView del archivo view.py
 from sympy import symbols, sympify
 
@@ -25,7 +26,60 @@ class GeneratorController:
         Returns:
             None
         """        
+        text_equation, text_var, constants = self.prepare_equation(text_equation, text_var, text_constant)  
+
+        #Añadimos la ecuación al modelo
+        self.model.add_equation(text_equation, text_var, constants) 
+
+        #Actualiza la lista de ecuaciones en la vista
+        self.view.update_dropdown_equation(self.get_list_equations())           
+
+    def get_equation(self, name):
         
+        #Quitamos Equation_ del name
+        name = name.replace("Ecuacion_", "")
+        name = int(name) - 1
+
+        #Obtenemos la ecuación del modelo
+        equation = self.model.get_equations()[name] 
+    
+        #Convertimos los elementos de la ecuación a texto
+        equation_text = str(equation.get_equation())
+        symbols_text = [str(sym) for sym in equation.get_symbol()]
+        constants_text = [f"{key}={value}" for key, value in equation.get_constants_values().items()]
+        
+        #Adaptamos la salida para que sea más legible
+        equation_text = equation_text.replace(" ", "")
+        symbols_text = " ".join(symbols_text).replace(" ", ",")
+        constants_text = ",".join(constants_text)
+
+        return equation_text, symbols_text, constants_text  
+       
+    def get_list_equations(self):
+        #Formamos una lista compuesta por Ecuacion_i, donde i es el número de la ecuación
+        equations = self.model.get_equations()                                          
+        
+        if len(equations) > 0:                                    #Si hay ecuaciones
+            list_equations = []
+        
+            for i in range(len(equations)):
+                list_equations.append(f"Ecuacion_{i+1}")          #Añadimos la ecuación a la lista
+        else:
+            list_equations = None
+       
+        return list_equations                                    #Devolvemos la lista de ecuaciones
+    
+
+    def edit_equation(self, text_equation, text_var, text_constant, name):
+        name = name.replace("Ecuacion_", "")
+        index = int(name) - 1
+
+        text_equation, text_var, constants = self.prepare_equation(text_equation, text_var, text_constant)
+
+        self.model.edit_equation(text_equation,text_var,constants, index)        
+
+    def prepare_equation(self, text_equation, text_var, text_constant):
+         
         #Eliminamos los espacios en blanco de la ecuación
         text_equation = text_equation.replace(" ", "")  
         
@@ -44,29 +98,9 @@ class GeneratorController:
                 value = 0.0
             
             #Añadimos la constante al diccionario
-            constants[key] = float(value)
+            constants[key] = float(value)    
 
-        #Añadimos la ecuación al modelo
-        self.model.add_equation(text_equation, text_var, constants) 
-
-        #Actualiza la lista de ecuaciones en la vista
-        self.view.update_dropdown_equation(self.get_list_equations())           
-
-       
-    def get_list_equations(self):
-        #Formamos una lista compuesta por Ecuacion_i, donde i es el número de la ecuación
-        equations = self.model.get_equations()                                          
-        
-        if len(equations) > 0:                                                        #Si no hay ecuaciones
-            list_equations = []
-        
-            for i, equation in enumerate(equations):
-                list_equations.append(f"Ecuacion_{i+1}")                                   #Añadimos la ecuación a la lista
-        else:
-            list_equations = None
-       
-        return list_equations                                                          #Devolvemos la lista de ecuaciones
-    
+        return text_equation, text_var, constants                          
 
     def delete_equation(self, equation):
         self.model.delete_equation(equation)                                   #Elimina la ecuación del modelo
@@ -78,18 +112,7 @@ class GeneratorController:
         self.view.update_file_name(self.model.get_file_name())                 #Actualiza el nombre del archivo en la vista
         self.view.update_method(self.model.get_method())                       #Actualiza el método numérico en la vista
         self.view.update_translator_type(self.model.get_translator_type())     #Actualiza el tipo de traductor en la vista
-    
-    def edit_equation(self, equation):
-        self.model.edit_equation(equation)                                     #Edita la ecuación en el modelo
-        self.view.update_terminal(self.model.get_equations())                  #Actualiza la terminal con la ecuación editada
-        self.view.update_equation_list(self.model.get_equations())             #Actualiza la lista de ecuaciones en la vista
-        self.view.update_conditions_list(self.model.get_conditions())          #Actualiza la lista de condiciones en la vista
-        self.view.update_initial_conditions_list(self.model.get_initial_conditions())
-        self.view.update_time_range(self.model.get_time_range())               #Actualiza el rango de tiempo en la vista
-        self.view.update_file_name(self.model.get_file_name())                 #Actualiza el nombre del archivo en la vista
-        self.view.update_method(self.model.get_method())                       #Actualiza el método numérico en la vista
-        self.view.update_translator_type(self.model.get_translator_type())     #Actualiza el tipo de traductor en la vista
-    
+
     def clear_fields(self):
         self.view.clear_input()                                                 #Limpia el campo de entrada
         self.view.update_terminal(self.model.get_equations())                   #Actualiza la terminal con la ecuación eliminada

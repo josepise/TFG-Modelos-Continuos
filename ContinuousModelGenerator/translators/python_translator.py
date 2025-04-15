@@ -59,28 +59,20 @@ class PythonSimulationGenerator(SimulationModelGenerator):
         #Lista que contendrá los nombres de las constantes ya añadidas.
         list_constants = []
 
-        #Unimos ambas listas ya que nos es mas facil 
-        # recorrerlas juntas.
+        #Unimos ambas listas ya que nos es mas facil recorrerlas juntas.
         eq_conds= self.equations+self.conditionals
         
 
         for exp in  eq_conds:
             constant_values = exp.get_constants_values()
 
-            # Comprobamos si hay mas de una constante y las añadimos al archivo.
-            # En caso de que haya una sola constante, la añadimos directamente.
-            try:
-                for constant in exp.get_constants():
+            # Añadimos al archivo las constantes .
+            for constant in exp.get_constants():
                     if constant not in list_constants:
                         list_constants.append(constant)
                         value = constant_values[str(constant)]  
                         self.file.write(f"{constant} = {value}\n")
-            except:
-                constant = exp.get_constants()
-                if constant not in list_constants:
-                    list_constants.append(constant)
-                    value = constant_values[str(constant)]
-                    self.file.write(f"{exp.get_constants()} = {value}\n")
+            
 
         self.file.write("\n\n")
 
@@ -107,23 +99,6 @@ class PythonSimulationGenerator(SimulationModelGenerator):
         
         self.file.write("\n\n")
 
-    def write_initialization_method(self):
-        self.file.write("def initialize():\n")
-        self.file.write("    iteration = 0\n")
-
-        # Crear una lista basada en el número de ecuaciones
-        # Comprobamos que no obtenemos un error con len(self.equations[0].get_simbol))
-        try:
-            n = len(self.equations[0].get_simbol())
-        except:
-            n = 1
-
-        list_str = f"[{', '.join(['[]' for _ in range(n)])}]"
-
-        self.file.write("est = " + list_str + "\n")
-        self.file.write("\n\n")
-
-
     def write_conditionals(self):
         # Añadimos las condiciones que se aplicaran a las ecuaciones.
         self.file.write("\t# Condiciones\n")
@@ -141,12 +116,8 @@ class PythonSimulationGenerator(SimulationModelGenerator):
             conds = condition.get_conditions()
             results = condition.get_result()
 
-            try:
-                subs_dict = {str(sym): sp.Symbol(f'inp[{self.var_identifiers[str(sym)]}]') for sym in symbols}
-            except:
-                subs_dict = {str(symbols): sp.Symbol(f'inp[{self.var_identifiers[str(symbols)]}]')}
-
-
+            subs_dict = {str(sym): sp.Symbol(f'inp[{self.var_identifiers[str(sym)]}]') for sym in symbols}
+            
             conds = [cond.subs(subs_dict) for cond in conds]
             results = [res.subs(subs_dict) for res in results]
         
@@ -171,13 +142,9 @@ class PythonSimulationGenerator(SimulationModelGenerator):
         for i,equation in enumerate(self.equations):
             
             #Sustituimos los simbolos por la cadena inp[i] para poder evaluar la ecuación.
-            symbols = equation.get_simbol()
+            symbols = equation.get_symbol()
     
-
-            try:
-                subs_dict = {str(sym): sp.Symbol(f'inp[{self.var_identifiers[str(sym)]}]') for sym in symbols}
-            except:
-                subs_dict = {str(symbols): sp.Symbol(f'inp[{self.var_identifiers[str(symbols)]}]')}
+            subs_dict = {str(sym): sp.Symbol(f'inp[{self.var_identifiers[str(sym)]}]') for sym in symbols}
  
             # Realizamos la sustitución con el diccionario generado
             eq = equation.get_equation().subs(subs_dict)

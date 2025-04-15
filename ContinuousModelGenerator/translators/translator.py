@@ -81,13 +81,13 @@ class SimulationModelGenerator(ABC):
         for equation in self.equations:
 
             try:
-                for symbol in equation.get_simbol():
+                for symbol in equation.get_symbol():
                     if str(symbol) not in self.var_identifiers:
                         # Añadimos el símbolo a la lista de identificadores como string.
                         self.var_identifiers[str(symbol)] = index_var
                         index_var += 1
             except:
-                symbol = str(equation.get_simbol())
+                symbol = str(equation.get_symbol())
                 if symbol not in self.var_identifiers:
                     # Añadimos el símbolo a la lista de identificadores.
                     self.var_identifiers[symbol] = index_var
