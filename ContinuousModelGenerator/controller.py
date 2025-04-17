@@ -69,6 +69,19 @@ class GeneratorController:
        
         return list_equations                                    #Devolvemos la lista de ecuaciones
     
+    def get_list_conditions(self):
+        #Formamos una lista compuesta por Condición_i, donde i es el número de la condición
+        conditions = self.model.get_conditions()                                          
+        
+        if len(conditions) > 0:                                    #Si hay condiciones
+            list_conditions = []
+        
+            for i in range(len(conditions)):
+                list_conditions.append(f"Ecuacion_{i+1}")          #Añadimos la condición a la lista
+        else:
+            list_conditions = None
+       
+        return list_conditions                                    #Devolvemos la lista de condiciones
 
     def edit_equation(self, text_equation, text_var, text_constant, name):
         name = name.replace("Ecuacion_", "")
@@ -82,7 +95,6 @@ class GeneratorController:
          
         #Eliminamos los espacios en blanco de la ecuación
         text_equation = text_equation.replace(" ", "")  
-        
 
         #Eliminamos las comas en el texto de las variables
         text_var=text_var.replace(",", " ")

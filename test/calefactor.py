@@ -8,7 +8,7 @@ cond=Condition(["vr-(v_w+v_e)<-s"],["u_t=0"],"v_w",{"s":0.8,"vr":20,"v_e":15})
 cond1=Condition(["vr-(v_w+v_e)>s"],["u_t=1"],"v_w",{"s":0.8,"vr":20,"v_e":15})
 cond2=Condition(["vr-(v_w+v_e)>-s", "vr-(v_w+v_e)<s"],["u_t=0"],"v_w",{"s":0.8,"vr":20,"v_e":15})
 
-conds=[cond,cond1, cond2]
+conds=[cond,cond1]
 
 PythonSimulationGenerator([eq], conds, {"v_w":0},[0,50,0.2], "calefactor","csv", "runge-kutta-4").generate_file()
 
