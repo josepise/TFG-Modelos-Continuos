@@ -1,0 +1,5 @@
+matplotlib>=3.8.3
+numpy>=2.2.5
+PyYAML>=5.4.1
+setuptools>=59.6.0
+sympy>=1.13.3

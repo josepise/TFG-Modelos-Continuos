@@ -1,6 +1,6 @@
 from .model import ContinuousModelGenerator as SimulationModel  #Importa la clase SimulationModel del archivo model.py
 from .equation import Equation  #Importa la clase Equation del archivo equation.py
-from .view import GUI as SimulationView  #Importa la clase SimulationView del archivo view.py
+from .view.main_view import GUI as SimulationView  #Importa la clase SimulationView del archivo view.py
 from sympy import symbols, sympify
 
 
@@ -34,6 +34,29 @@ class GeneratorController:
         #Actualiza la lista de ecuaciones en la vista
         self.view.update_dropdown_equation(self.get_list_equations())           
 
+    def add_condition(self,text_exp, text_act, text_var, text_constant):
+        """
+        Añade una condición al modelo.
+        Este método procesa una condición proporcionada por el usuario, junto con las variables
+        y constantes asociadas, y la añade al modelo. Además, actualiza la vista para reflejar
+        los cambios en la lista de condiciones.
+        Args:
+            text_exp (str): La expresión de la condición en formato de texto. Los espacios en blanco serán eliminados.
+            text_act (str): La acción a realizar si se cumple la condición. Los espacios en blanco serán eliminados.
+            text_var (str): Las variables de la condición, separadas por comas. Las comas serán reemplazadas por espacios.
+            text_constant (str): Las constantes de la condición en formato "clave=valor", separadas por comas. Si no se 
+                                 proporciona un valor, se asignará 0.0 por defecto.
+        Returns:
+            None
+        """        
+        list_exp, list_act, text_var, constants = self.prepare_condition(text_exp, text_act, text_var, text_constant)  
+
+        #Añadimos la condición al modelo
+        self.model.add_condition(list_exp,list_act, text_var, constants) 
+
+        #Actualiza la lista de condiciones en la vista
+        self.view.update_dropdown_condition(self.get_list_conditions())
+                      
     def get_equation(self, name):
         
         #Quitamos Equation_ del name
@@ -54,6 +77,23 @@ class GeneratorController:
         constants_text = ",".join(constants_text)
 
         return equation_text, symbols_text, constants_text  
+    
+    def get_condition(self, name):
+            
+            #Quitamos Condicion_ del name
+            name = name.replace("Condicion_", "")
+            name = int(name) - 1
+    
+            #Obtenemos la condición del modelo
+            condition = self.model.get_conditions()[name] 
+        
+            #Obtenemos los elementos de la condición
+            condition_text = condition.get_text_condition()
+            action_text = condition.get_text_result()
+            symbols_text = condition.get_text_symbols()
+            constants_text = condition.get_text_constants()
+                    
+            return condition_text, action_text, symbols_text, constants_text
        
     def get_list_equations(self):
         #Formamos una lista compuesta por Ecuacion_i, donde i es el número de la ecuación
@@ -67,7 +107,7 @@ class GeneratorController:
         else:
             list_equations = None
        
-        return list_equations                                    #Devolvemos la lista de ecuaciones
+        return list_equations                                   
     
     def get_list_conditions(self):
         #Formamos una lista compuesta por Condición_i, donde i es el número de la condición
@@ -77,11 +117,11 @@ class GeneratorController:
             list_conditions = []
         
             for i in range(len(conditions)):
-                list_conditions.append(f"Ecuacion_{i+1}")          #Añadimos la condición a la lista
+                list_conditions.append(f"Condicion_{i+1}")          #Añadimos la condición a la lista
         else:
             list_conditions = None
        
-        return list_conditions                                    #Devolvemos la lista de condiciones
+        return list_conditions                                    
 
     def edit_equation(self, text_equation, text_var, text_constant, name):
         name = name.replace("Ecuacion_", "")
@@ -90,6 +130,14 @@ class GeneratorController:
         text_equation, text_var, constants = self.prepare_equation(text_equation, text_var, text_constant)
 
         self.model.edit_equation(text_equation,text_var,constants, index)        
+
+    def edit_condition(self, text_exp, text_act, text_var, text_constant, name):
+        name = name.replace("Condicion_", "")
+        index = int(name) - 1
+
+        text_exp, text_act, text_var, constants = self.prepare_condition(text_exp, text_act, text_var, text_constant)
+
+        self.model.edit_condition(text_exp,text_act,text_var,constants, index)
 
     def prepare_equation(self, text_equation, text_var, text_constant):
          
@@ -112,7 +160,46 @@ class GeneratorController:
             #Añadimos la constante al diccionario
             constants[key] = float(value)    
 
-        return text_equation, text_var, constants                          
+        return text_equation, text_var, constants
+
+    def prepare_condition(self, text_exp, text_act, text_var, text_constant):
+        
+        #Eliminamos los espacios en blanco de la ecuación
+        text_exp = text_exp.replace(" ", "")  
+
+        # Formamos una lista donde cada elemento se encuentra separado con una coma en el string
+        if "," in text_exp:
+            list_exp = text_exp.split(",")
+        else:
+            list_exp = [text_exp]  
+        
+        if "," in text_act:
+            list_act = text_act.split(",")
+        else:
+            list_act = [text_act]
+
+        #Eliminamos las comas en el texto de las variables
+        text_var=text_var.replace(",", " ")
+
+        #Convertirmos las constantes en un diccionario
+        constants = {}
+        if text_constant != "":
+            for constant in text_constant.split(","):
+                #Dividimos la constante en clave y valor
+                if "=" in constant:
+                    key, value = constant.split("=")
+                else:
+                    key = constant
+                    value = 0.0
+                
+                #Añadimos la constante al diccionario
+                constants[key] = float(value)    
+
+        return list_exp, list_act, text_var, constants
+
+    def generate(self):
+        self.model.generate_file()                                              #Genera el archivo de salida
+
 
     def delete_equation(self, equation):
         self.model.delete_equation(equation)                                   #Elimina la ecuación del modelo

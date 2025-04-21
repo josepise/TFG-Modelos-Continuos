@@ -18,8 +18,6 @@ class Equation:
     
     Métodos
     -------
-    __init__():
-        Inicializa la clase Equation con listas vacías para almacenar la ecuación y un diccionario para los valores de las constantes.
     __init__(equation, simbols, constants, values={}):
         Agrega una ecuación, sus símbolos y constantes.
     get_equation():
@@ -31,12 +29,6 @@ class Equation:
     process_equations():
         Convierte el texto de la ecuación, símbolos y constantes en objetos sympy y los almacena.
     """
-    def __init__(self):
-        self.name = '' # Nombre de la ecuación.
-        self.text_equation = [] # Almacena el texto introducido por el usuario de las ecuaciones.
-        self.equation = '' # Almacena las ecuaciones procesadas para ser tratadas por sympy.
-        self.simbol = '' # Almacena los símbolos de la ecuación.
-        self.constant_values = {} # Diccionario para almacenar los valores de las constantes de las ecuaciones.
 
     def __init__(self, name, equation, simbols, constant_values={}):
         """ 
@@ -86,6 +78,21 @@ class Equation:
 
         return self.simbol
 
+    def get_text_equation(self):
+        """Devuelve el texto de la ecuación."""
+        return str(self.equation)
+    
+    def get_text_symbol(self):
+        """Devuelve el texto de los símbolos de la ecuación."""
+        if type(self.simbol) == list:
+            text = [str(sym) for sym in self.simbol]
+        else:
+            text = [str(self.simbol)]
+
+        #Quitamos los parentesis y las comas.
+        text = [s.replace("(", "").replace(")", "").replace(",", "") for s in text]
+        return " ".join(text)
+    
     def process_equations(self):
         """
         Convierte el texto de las ecuaciones, símbolos y constantes en objetos sympy y los almacena en los atributos correspondientes.

@@ -5,5 +5,7 @@ from .translators.java_translator import JavaSimulationGenerator
 from .equation import Equation
 from .conditions import Condition
 from .model import ContinuousModelGenerator
-from .view import GUI
+from .view.main_view import GUI
+from .view.equation_view import GUI_Equation
+from .view.condition_view import GUI_Condition
 from .controller import GeneratorController

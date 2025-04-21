@@ -1,3 +1,4 @@
+import yaml
 from .translators import (python_translator, cpp_translator, translator)
 from .equation import Equation
 from .conditions import Condition
@@ -158,7 +159,20 @@ class ContinuousModelGenerator:
         eq = Equation("a",text_equation, text_var, constant)
         self.equations[index] = eq
 
+    def add_condition(self, text_exp ,  text_action, text_var,text_constant):
+        cond = Condition(text_exp, text_action, text_var, text_constant)
+        self.conditions.append(cond)
 
+    def edit_condition(self, text_exp ,  text_action, text_var,text_constant, index):
+        """
+        Edita una condición existente en la lista de condiciones.
+        """
+        if index < 0 or index >= len(self.conditions):
+            raise IndexError("Índice fuera de rango.")
+        
+        cond = Condition(text_exp, text_action, text_var, text_constant)
+        self.conditions[index] = cond
+        
     def check_components(self):
         """
         Verifica si los componentes son válidos.
@@ -207,4 +221,59 @@ class ContinuousModelGenerator:
             raise ValueError("El método numérico debe ser 'euler' o 'rk4'.")
         
     
+    def save_config(self, file_path, filename="config.yaml"):
+        """
+        Guarda la configuración actual en un archivo.
+        """
+        config = {
+            "equation":[ 
+                {
+                    "name": eq.get_name(),
+                    "expression": eq.get_text_equation(),
+                    "variable": eq.get_text_symbol(),
+                    "parameters": eq.get_constants_values()
+                } for eq in self.equations
+            ],
+            "conditions": [
+                {
+                    "expressions": cond.get_text_condition(),
+                    "actions": cond.get_text_result(),
+                    "variables": cond.get_text_symbols(),
+                    "parameters": cond.get_text_constants()
+                } for cond in self.conditions
+            ],
+            "simulation": {
+                "time": self.time_range,
+                "output_file": self.file_name,
+                "method": self.method
+            }
+        }
 
+        with open(filename, "w") as file:
+            yaml.dump(config, file, sort_keys=False)
+
+    @classmethod
+    def load_config(cls, file_path, filename="config.yaml"):
+        with open(filename, "r") as file:
+            config = yaml.safe_load(file)
+
+        equation = [
+            Equation(eq["name"], eq["expression"], eq["variable"], eq["parameters"])
+            for eq in config["equation"]
+        ]
+
+        conditions = [
+            Condition(c["expressions"], c["actions"], c["variables"], c["parameters"])
+            for c in config["conditions"]
+        ]
+
+        sim_data = config["simulation"]
+
+
+        instance = cls()
+        instance.equations = equation
+        instance.conditions = conditions
+        instance.time_range = sim_data["time"]
+        instance.file_name = sim_data["output_file"]
+        instance.method = sim_data["method"]
+        return instance
