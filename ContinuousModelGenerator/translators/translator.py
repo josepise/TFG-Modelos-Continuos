@@ -93,6 +93,35 @@ class SimulationModelGenerator(ABC):
                     self.var_identifiers[symbol] = index_var
                     index_var += 1
     
+    def set_constants(self) -> None:
+        """
+        Establece las constantes de las ecuaciones y condiciones.
+        """
+    
+        self.constants = []
+        self.constants_values = {}
+
+        list_eq_cond=self.equations + self.conditionals
+    
+        # Iteramos sobre las ecuaciones y condiciones para obtener las constantes.
+        for eq_cond in list_eq_cond:
+            # Obtenemos los símbolos de la ecuación o condición.
+            self.constants += eq_cond.get_constants()
+            self.constants_values.update(eq_cond.get_constants_values())
+    
+        self.constants = list(set(self.constants))  # Eliminamos duplicados.
+
+    def get_str_symbols(self) -> str:
+        """
+        Devuelve una cadena con los símbolos de las ecuaciones y condiciones.
+        """
+        symbols = ", ".join(self.constants) + ", ".join(self.var_identifiers.keys())
+
+        str_constant=" ".join(f"<{x}>" for x in self.constants)
+        str_var=" ".join(f"<{x}>" for x in self.var_identifiers.keys())
+        
+        return f"{str_constant} {str_var}"
+
     def check_equations_conditions(self):
         """
         Comprueba que las condiciones contengan variables definidas en las ecuaciones.

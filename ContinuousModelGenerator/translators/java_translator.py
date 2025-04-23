@@ -17,7 +17,9 @@ class JavaSimulationGenerator(SimulationModelGenerator):
         self.file = open(f"./models/{self.name_file}.java", "w")
 
         # Write the file
+
         self.set_var_identifiers()
+        self.set_constants()
         self.write_head_file()
         self.write_model_parameters()
         self.write_pair_class()
@@ -71,30 +73,16 @@ class JavaSimulationGenerator(SimulationModelGenerator):
             self.file.write("\tpublic static double tol = 1e-6; // Tolerance for RKF45\n")
 
         self.file.write("\t// Model parameters\n")
-        list_constants = []
-        list_results_var = [str(var) for condition in self.conditionals for var in condition.get_results_var()]
-        eq_conds = self.equations + self.conditionals
-        for equation in eq_conds:
-            constant_values = equation.get_constants_values()  
-           
-            for constant in equation.get_constants():
-                if constant not in list_constants:
-                    list_constants.append(constant)
-                    value = constant_values[str(constant)]
-                
-                    # Comprobamos si alguna de las constantes pueden llegar a cambiar de valor
-                    # en el transcurso de la simulación. En caso de ser así, no las declaramos 
-                    # como constantes.
-                    if constant in list_results_var:
-                        self.file.write(f"\tpublic static double {constant} = {value};\n")
-                    else:
-                        self.file.write(f"\tpublic static final double {constant} = {value};\n")
-                    
+
+        for constant in self.constants:
+            value = self.constants_values[str(constant)]
+            self.file.write(f"\tpublic static double {constant} = {value};\n")
+                                    
         self.file.write("\n")
 
-        self.file.write(f"\tpublic static final double t0 = {self.simulation_time[0]};\n")
-        self.file.write(f"\tpublic static final double tf = {self.simulation_time[1]};\n")
-        self.file.write(f"\tpublic static final double dt = {self.simulation_time[2]};\n")
+        self.file.write(f"\tpublic static double t0 = {self.simulation_time[0]};\n")
+        self.file.write(f"\tpublic static double tf = {self.simulation_time[1]};\n")
+        self.file.write(f"\tpublic static double dt = {self.simulation_time[2]};\n")
         if self.numerical_method == "runge-kutta-fehlberg":
             self.file.write("\tpublic static List<Double> t = new ArrayList<>(Arrays.asList(t0));\n")
         self.file.write("\n")
@@ -244,45 +232,70 @@ class JavaSimulationGenerator(SimulationModelGenerator):
         self.file.write("\tpublic static void main(String[] args) throws IOException {\n")
         self.file.write("\t\tfor (int i = 0; i < n_equations; ++i) {\n")
         self.file.write("\t\t\test.add(new ArrayList<>(Collections.singletonList(0.0)));\n")
-        self.file.write("\t\t}\n")
+        self.file.write("\t\t}\n\n")
+
+        str_symbols = self.get_str_symbols()
+        str_time= "<t_0> <t_f> <tol>" if self.numerical_method == "runge-kutta-fehlberg" \
+                    else "<t_0> <t_f> <d_t>"
+
+        # Check the number of command-line arguments
+        self.file.write(f"\t\tif (args.length < {len(self.constants) + len(self.initial_conditions) + 3}) {{\n")
+        self.file.write(f"\t\t\tSystem.out.println(\"Error in the number of parameters: java \" + \n")
+        self.file.write(f"\t\t\t\t\"{self.name_file}\" + \" {str_symbols} {str_time}\");\n")
+        self.file.write("\t\t\tSystem.exit(1);\n")
+        self.file.write("\t\t}\n\n")
+
+        # Assign command-line arguments to constants and initial conditions
+        self.file.write("\t\tint numArgs = 0;\n\n")
+
+        for constant in self.constants:
+            self.file.write(f"\t\t{constant} = Double.parseDouble(args[numArgs++]);\n")
 
         for symbol, value in self.initial_conditions.items():
-            self.file.write(f"\t\t\test.get({self.var_identifiers[symbol]}).set(0, {value:.1f});\n")
+            self.file.write(f"\t\test.get({self.var_identifiers[symbol]}).set(0,Double.parseDouble(args[numArgs++])); // {symbol}\n")
+
+        self.file.write("\t\tt0 = Double.parseDouble(args[numArgs++]);\n")
+        self.file.write("\t\ttf = Double.parseDouble(args[numArgs++]);\n")
+
+        if self.numerical_method == "runge-kutta-fehlberg":
+            self.file.write("\t\ttol = Double.parseDouble(args[numArgs++]);\n\n")
+        else:
+            self.file.write("\t\tdt = Double.parseDouble(args[numArgs++]);\n\n")
 
         if self.numerical_method == "euler":
-            self.file.write("\t\t\tint steps = (int) ((tf - t0) / dt);\n")
-            self.file.write("\t\t\tfor (int i = 1; i <= steps; ++i) {\n")
-            self.file.write("\t\t\t\toneStepEuler(dt, i);\n")
-            self.file.write("\t\t\t}\n")
+            self.file.write("\t\tint steps = (int) ((tf - t0) / dt);\n")
+            self.file.write("\t\tfor (int i = 1; i <= steps; ++i) {\n")
+            self.file.write("\t\t\toneStepEuler(dt, i);\n")
+            self.file.write("\t\t}\n")
         elif self.numerical_method == "runge-kutta-4":
-            self.file.write("\t\t\tint steps = (int) ((tf - t0) / dt);\n")
-            self.file.write("\t\t\tfor (int i = 1; i <= steps; ++i) {\n")
-            self.file.write("\t\t\t\toneStepRungeKutta4(dt, i);\n")
-            self.file.write("\t\t\t}\n")
+            self.file.write("\t\tint steps = (int) ((tf - t0) / dt);\n")
+            self.file.write("\t\tfor (int i = 1; i <= steps; ++i) {\n")
+            self.file.write("\t\t\toneStepRungeKutta4(dt, i);\n")
+            self.file.write("\t\t}\n")
         elif self.numerical_method == "runge-kutta-fehlberg":
-            self.file.write("\t\t\tdouble h = dt;\n")
-            self.file.write("\t\t\twhile (t.get(t.size() - 1) < tf) {\n")
-            self.file.write("\t\t\t\tList<Double> inp = new ArrayList<>(n_equations);\n")
-            self.file.write("\t\t\t\tList<Double> y_new = new ArrayList<>(n_equations);\n")
-            self.file.write("\t\t\t\tdouble error;\n\n")
-            self.file.write("\t\t\t\tfor (int i = 0; i < n_equations; ++i) {\n")
-            self.file.write("\t\t\t\t\tinp.add(est.get(i).get(est.get(i).size() - 1));\n")
-            self.file.write("\t\t\t\t}\n")
-            self.file.write("\n")
-            self.file.write("\t\t\t\tPair<List<Double>, Double> result = rkf45Step(h, inp);\n")
-            self.file.write("\t\t\t\ty_new = result.getKey();\n")
-            self.file.write("\t\t\t\terror = result.getValue();\n")
-            self.file.write("\n")
-            self.file.write("\t\t\t\tif (error <= tol) {\n")
-            self.file.write("\t\t\t\t\tt.add(t.get(t.size() - 1) + h);\n")
-            self.file.write("\t\t\t\t\tfor (int i = 0; i < n_equations; ++i) {\n")
-            self.file.write("\t\t\t\t\t\test.get(i).add(y_new.get(i));\n")
-            self.file.write("\t\t\t\t\t}\n")
-            self.file.write("\t\t\t\t}\n")
-            self.file.write("\n")
-            self.file.write("\t\t\t\th *= Math.min(5.0, Math.max(0.2, 0.84 * Math.pow(tol / error, 0.25)));\n")
-            self.file.write("\t\t\t\th = Math.min(h, tf - t.get(t.size() - 1));\n")
+            self.file.write("\t\tdouble h = dt;\n")
+            self.file.write("\t\twhile (t.get(t.size() - 1) < tf) {\n")
+            self.file.write("\t\t\tList<Double> inp = new ArrayList<>(n_equations);\n")
+            self.file.write("\t\t\tList<Double> y_new = new ArrayList<>(n_equations);\n")
+            self.file.write("\t\t\tdouble error;\n\n")
+            self.file.write("\t\t\tfor (int i = 0; i < n_equations; ++i) {\n")
+            self.file.write("\t\t\t\tinp.add(est.get(i).get(est.get(i).size() - 1));\n")
             self.file.write("\t\t\t}\n")
+            self.file.write("\n")
+            self.file.write("\t\t\tPair<List<Double>, Double> result = rkf45Step(h, inp);\n")
+            self.file.write("\t\t\ty_new = result.getKey();\n")
+            self.file.write("\t\t\terror = result.getValue();\n")
+            self.file.write("\n")
+            self.file.write("\t\t\tif (error <= tol) {\n")
+            self.file.write("\t\t\t\tt.add(t.get(t.size() - 1) + h);\n")
+            self.file.write("\t\t\t\tfor (int i = 0; i < n_equations; ++i) {\n")
+            self.file.write("\t\t\t\t\test.get(i).add(y_new.get(i));\n")
+            self.file.write("\t\t\t\t}\n")
+            self.file.write("\t\t\t}\n")
+            self.file.write("\n")
+            self.file.write("\t\t\th *= Math.min(5.0, Math.max(0.2, 0.84 * Math.pow(tol / error, 0.25)));\n")
+            self.file.write("\t\t\th = Math.min(h, tf - t.get(t.size() - 1));\n")
+            self.file.write("\t\t}\n")
 
         self.file.write("\t\t// Save the results to a CSV file\n")
         self.file.write(f"\t\ttry (BufferedWriter results = new BufferedWriter(new FileWriter(\"{self.name_file}_output_java.csv\"))) {{\n")

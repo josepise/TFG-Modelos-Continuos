@@ -37,6 +37,72 @@ class GUI:
         self.add_img = PhotoImage(file=os.path.join(self.route_img, 'add.png'))
         self.edit_img = PhotoImage(file=os.path.join(self.route_img, 'edit.png'))
 
+   
+
+    def create_widgets(self):
+        
+        self.top_menu()
+
+        # Cuadro de texto elegir lenguaje
+        self.canvas.create_text(
+            27.0,
+            97.0,
+            anchor="nw",
+            text="Lenguaje",
+            fill="#FFFFFF",
+            font=("Inter", 14 * -1)
+        )
+        
+        # Lista desplegable de lenguajes
+        options=self.controler.get_list_languages()
+        self.dropdown_lang = StringVar(self.window)
+        self.dropdown_lang.set("Seleccionar")
+        self.dropdown_menu_lang = OptionMenu(
+            self.window,
+            self.dropdown_lang,
+            *options
+        )
+        self.dropdown_menu_lang.place(x=104.0, y=97.0, width=198.0, height=20.0)
+
+        
+
+        self.widget_equation()
+        
+        self.widget_condition()
+        
+        self.help_button = Button(
+            self.window,
+            text="Generar",
+            command=lambda:self.controler.generate,  # Reemplazar con la acción deseada
+            bg="#D9D9D9",
+            relief="flat"
+        )
+        self.help_button.place(x=659.0, y=399.0, width=125.0, height=50.0)
+
+
+    def top_menu(self):
+        menu_bar = Menu(self.window)
+
+        menu_archivo = Menu(menu_bar, tearoff=0)
+        menu_archivo.add_command(label="Nuevo")#, command=nuevo_archivo)
+        menu_archivo.add_command(label="Abrir")#, command=abrir_archivo)
+        menu_archivo.add_separator()
+        menu_archivo.add_command(label="Salir")#, command=salir)
+        menu_bar.add_cascade(label="Archivo", menu=menu_archivo)
+
+        # Menú "Ver"
+        menu_ver = Menu(menu_bar, tearoff=0)
+        menu_ver.add_checkbutton(label="Mostrar líneas de tiempo")
+        menu_bar.add_cascade(label="Ver", menu=menu_ver)
+
+        # Menú "Ayuda"
+        menu_ayuda = Menu(menu_bar, tearoff=0)
+        menu_ayuda.add_command(label="Ver Ayuda")#, command=mostrar_ayuda)
+        menu_bar.add_cascade(label="Ayuda", menu=menu_ayuda)
+
+        # Asociar la barra de menú con la ventana
+        self.window.config(menu=menu_bar)
+
     def widget_equation(self):
 
         #Cuadro de texto de Ecuaciones
@@ -86,6 +152,7 @@ class GUI:
             font=("Inter", 14 * -1)
         )
 
+
         self.update_dropdown_condition(self.controler.get_list_conditions())
 
         
@@ -114,118 +181,6 @@ class GUI:
         )
 
         self.edit_condition_button.place(x=349.0, y=176.0, width=20.0, height=20.0)
-
-    def create_widgets(self):
-        
-        self.top_menu()
-
-        self.widget_equation()
-        
-        self.widget_condition()
-        
-        self.help_button = Button(
-            self.window,
-            text="Ayuda",
-            command=lambda:self.controler.generate,  # Reemplazar con la acción deseada
-            bg="#D9D9D9",
-            relief="flat"
-        )
-        self.help_button.place(x=659.0, y=399.0, width=125.0, height=50.0)
-
-        self.canvas.create_rectangle(
-            250.0,
-            30.0,
-            372.0,
-            54.0,
-            fill="#D9D9D9",
-            outline=""
-        )
-
-        self.canvas.create_text(
-            264.0,
-            33.0,
-            anchor="nw",
-            text="Ayuda",
-            fill="#000000",
-            font=("Inter", 12 * -1)
-        )
-
-        self.canvas.create_rectangle(
-            125.0,
-            30.0,
-            247.0,
-            54.0,
-            fill="#D9D9D9",
-            outline=""
-        )
-
-        self.canvas.create_text(
-            139.0,
-            33.0,
-            anchor="nw",
-            text="Ver",
-            fill="#000000",
-            font=("Inter", 12 * -1)
-        )
-
-        self.canvas.create_rectangle(
-            0.0,
-            30.0,
-            122.0,
-            54.0,
-            fill="#D9D9D9",
-            outline=""
-        )
-
-        self.canvas.create_text(
-            14.0,
-            33.0,
-            anchor="nw",
-            text="Archivo",
-            fill="#000000",
-            font=("Inter", 12 * -1)
-        )
-
-        self.canvas.create_rectangle(
-            0.0,
-            0.0,
-            1440.0,
-            27.0,
-            fill="#D9D9D9",
-            outline=""
-        )
-
-        self.canvas.create_text(
-            12.0,
-            7.0,
-            anchor="nw",
-            text="Generador de Programas de Simulación Continua",
-            fill="#000000",
-            font=("Inter", 12 * -1)
-        )
-
-    def top_menu(self):
-        menu_bar = Menu(self.window)
-
-        menu_archivo = Menu(menu_bar, tearoff=0)
-        menu_archivo.add_command(label="Nuevo")#, command=nuevo_archivo)
-        menu_archivo.add_command(label="Abrir")#, command=abrir_archivo)
-        menu_archivo.add_separator()
-        menu_archivo.add_command(label="Salir")#, command=salir)
-        menu_bar.add_cascade(label="Archivo", menu=menu_archivo)
-
-        # Menú "Ver"
-        menu_ver = Menu(menu_bar, tearoff=0)
-        menu_ver.add_checkbutton(label="Mostrar líneas de tiempo")
-        menu_bar.add_cascade(label="Ver", menu=menu_ver)
-
-        # Menú "Ayuda"
-        menu_ayuda = Menu(menu_bar, tearoff=0)
-        menu_ayuda.add_command(label="Ver Ayuda")#, command=mostrar_ayuda)
-        menu_bar.add_cascade(label="Ayuda", menu=menu_ayuda)
-
-        # Asociar la barra de menú con la ventana
-        self.window.config(menu=menu_bar)
 
     def update_dropdown_condition(self,options):
         self.dropdown_cond = StringVar(self.window)

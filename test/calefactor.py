@@ -13,8 +13,8 @@ output_type="csv"
 method="runge-kutta-4"
 
 conds = [cond, cond1]
-PythonSimulationGenerator([eq], conds, {"v_w":0},[0,50,0.2], "calefactor","csv", "runge-kutta-4").generate_file()
+PythonSimulationGenerator([eq], conds, {"v_w":0},[0,50,0.2], "calefactor","csv", "runge-kutta-fehlberg").generate_file()
 
-# CppSimulationGenerator([eq], conds, {"v_w":0},[0,50,0.2],"calefactor", "runge-kutta-4").generate_file()
+CppSimulationGenerator([eq], conds, {"v_w":0},[0,50,0.2],"calefactor", "runge-kutta-fehlberg").generate_file()
 
-# JavaSimulationGenerator([eq], conds, {"v_w":0},[0,50,0.2],"calefactor", "runge-kutta-4").generate_file()
+JavaSimulationGenerator([eq], conds, {"v_w":0},[0,50,0.2],"calefactor", "runge-kutta-fehlberg").generate_file()

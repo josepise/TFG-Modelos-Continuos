@@ -16,8 +16,10 @@ class CppSimulationGenerator(SimulationModelGenerator):
         os.makedirs("./models/", exist_ok=True)
         self.file = open(f"./models/{self.name_file}.cpp", "w")
 
-        # Write the file
         self.set_var_identifiers()
+        self.set_constants()
+
+        # Write the file
         self.write_head_file()
         self.write_model_parameters()
         self.write_equations()
@@ -69,7 +71,6 @@ class CppSimulationGenerator(SimulationModelGenerator):
         list_constants = []      
 
         #Lista para comprobar si la variable es un resultado de una condición.                   
-        list_results_var = [str(var) for condition in self.conditionals for var in condition.get_results_var()]
         eq_conds= self.equations+self.conditionals
         
         for equation in eq_conds:
@@ -78,20 +79,15 @@ class CppSimulationGenerator(SimulationModelGenerator):
             for constant in equation.get_constants():
                 if constant not in list_constants:
                     list_constants.append(constant)
-                    value = constant_values[str(constant)]
-                
-                    if constant in list_results_var:  
-                        self.file.write(f"double {constant} = {value};\n")
-                    else:
-                        self.file.write(f"const double {constant} = {value};\n")
-
-                        
+                    value= constant_values.get(constant, 0.0)
+                    self.file.write(f"double {constant} = {value};\n")
+                            
         self.file.write("\n")
 
         # Add simulation time parameters
-        self.file.write(f"const double t0 = {self.simulation_time[0]};\n")
-        self.file.write(f"const double tf = {self.simulation_time[1]};\n")
-        self.file.write(f"const double dt = {self.simulation_time[2]};\n")
+        self.file.write(f"double t0 = {self.simulation_time[0]};\n")
+        self.file.write(f"double tf = {self.simulation_time[1]};\n")
+        self.file.write(f"double dt = {self.simulation_time[2]};\n")
         if self.numerical_method == "runge-kutta-fehlberg":
             self.file.write("vector<double> t = {t0};\n")
         self.file.write("\n")
@@ -226,15 +222,48 @@ class CppSimulationGenerator(SimulationModelGenerator):
 
     def write_main(self):
         # Write the main function
-        self.file.write("int main() {\n")
+        num_args = 1
+
+        self.file.write("int main(int argc, char* argv[]) {\n")
         self.file.write("    for (int i = 0; i < n_equations; ++i) {\n")
         self.file.write("        est[i].push_back(0.0);\n")  # Initialize with 0.0
-        self.file.write("    }\n")
+        self.file.write("    }\n\n")
+
+
+        str_symbols = self.get_str_symbols()
+        str_time="<t_0> <t_f> <tol>" if self.numerical_method == "runge-kutta-fehlberg" \
+                    else "<t_0> <t_f> <d_t>"
+        
+        #Escribimos la comprobación de los argumentos de la línea de comandos.
+        self.file.write(f"\tif (argc < {len(self.constants)+len(self.initial_conditions)+3}) {{ \n")
+        self.file.write(f"\t\tcerr << \"Error en el número de parámetros: ./{self.name_file} {str_symbols} \" << \n" \
+                        + f"\t\t\" {str_time}   \"<< endl;\n")
+        self.file.write("\t\treturn 1;\n \t}\n\n")
+
+        
+        for constant in self.constants:
+            self.file.write(f"\t{constant}=atof(argv[{num_args}]);\n")
+            num_args += 1
 
         for symbol, value in self.initial_conditions.items():
-            self.file.write(f"    est[{self.var_identifiers[symbol]}][0] = {value};\n")
+            self.file.write(f"\test[{self.var_identifiers[symbol]}][0] = atof(argv[{num_args}]);    //{symbol}\n")
+            num_args += 1
 
-       
+        self.file.write(f"\tt0 = atof(argv[{num_args}]);\n")
+        num_args += 1
+        
+        self.file.write(f"\ttf = atof(argv[{num_args}]);\n")
+        num_args += 1
+        
+        if self.numerical_method == "runge-kutta-fehlberg":
+            self.file.write(f"\ttol = atof(argv[{num_args}]);\n")
+            num_args += 1
+        else:
+            self.file.write(f"\tdt = atof(argv[{num_args}]);\n")
+            num_args += 1
+
+        self.file.write("\n")
+
         if self.numerical_method == "euler":
             self.file.write("    int steps = static_cast<int>((tf - t0) / dt);\n")
             self.file.write("    for (int i = 1; i <= steps; ++i) {\n")

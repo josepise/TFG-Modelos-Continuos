@@ -19,6 +19,7 @@ class PythonSimulationGenerator(SimulationModelGenerator):
 
         #Escribimos el archivo.
         self.set_var_identifiers()
+        self.set_constants()
         self.write_head_file()
         self.write_model_parameters()
         self.write_equations()
@@ -40,6 +41,7 @@ class PythonSimulationGenerator(SimulationModelGenerator):
         #Añadimos los imports necesarios.
         self.file.write("import numpy as np\n")
         self.file.write("import matplotlib.pyplot as plt\n")
+        self.file.write("import sys\n")
         self.file.write("\n\n")
 
     def write_model_parameters(self):
@@ -55,24 +57,11 @@ class PythonSimulationGenerator(SimulationModelGenerator):
         #Añadimos las constantes de las ecuaciones y sus valores.
         self.file.write("# Parámetros del modelo\n")
 
-
-        #Lista que contendrá los nombres de las constantes ya añadidas.
-        list_constants = []
-
-        #Unimos ambas listas ya que nos es mas facil recorrerlas juntas.
-        eq_conds= self.equations+self.conditionals
-        
-
-        for exp in  eq_conds:
-            constant_values = exp.get_constants_values()
-
-            # Añadimos al archivo las constantes .
-            for constant in exp.get_constants():
-                    if constant not in list_constants:
-                        list_constants.append(constant)
-                        value = constant_values[str(constant)]  
-                        self.file.write(f"{constant} = {value}\n")
-            
+        # Añadimos al archivo las constantes .
+        for constant in self.constants:
+            value = self.constants_values[str(constant)]  
+            self.file.write(f"{constant} = {value}\n")
+    
 
         self.file.write("\n\n")
 
@@ -257,13 +246,7 @@ class PythonSimulationGenerator(SimulationModelGenerator):
     def write_simulation(self):
         self.file.write("def simulation():\n")
         self.file.write("\tglobal iteration\n")
-        
-        #Añadimos las condiciones iniciales.
-        self.file.write("\t#Condiciones iniciales\n")
-        for i, symbol in enumerate(self.initial_conditions):
-            self.file.write(f"\test[{self.var_identifiers[symbol]}].append({self.initial_conditions[symbol]}) \
-                            \t #{symbol}\n")
-        
+    
         
         if self.numerical_method == "euler":
             self.file.write("\n\tfor i in range(1, len(t)):\n")
@@ -301,6 +284,40 @@ class PythonSimulationGenerator(SimulationModelGenerator):
 
     def main(self):
         self.file.write("if __name__ == '__main__':\n")
+        
+        str_symbols = self.get_str_symbols()
+        str_time="<t_0> <t_f> <tol>" if self.numerical_method == "runge-kutta-fehlberg" \
+                    else "<t_0> <t_f> <d_t>"
+
+        # Escribimos la comprobación de los argumentos de la línea de comandos.
+        self.file.write("\tif len(sys.argv) < " + str(len(self.constants) + len(self.initial_conditions) + 3) + ":\n")
+        self.file.write(f"\t\tprint(f\"Error en el número de parámetros: python {{sys.argv[0]}} {str_symbols} {str_time}\")\n")
+        self.file.write("\t\tsys.exit(1)\n\n")
+
+        # Añadimos la asignación de los argumentos de la línea de comandos a las variables.
+        num_args = 1
+
+        for constant in self.constants:
+            self.file.write(f"\t{constant} = float(sys.argv[{num_args}])\n")
+            num_args += 1
+
+        for symbol, value in self.initial_conditions.items():
+            self.file.write(f"\test[{self.var_identifiers[symbol]}].append(float(sys.argv[{num_args}]))  # {symbol}\n")
+            num_args += 1
+
+        self.file.write(f"\tt0 = float(sys.argv[{num_args}])\n")
+        num_args += 1
+
+        self.file.write(f"\ttf = float(sys.argv[{num_args}])\n")
+        num_args += 1
+
+        if self.numerical_method == "runge-kutta-fehlberg":
+            self.file.write(f"\ttol = float(sys.argv[{num_args}])\n")
+            num_args += 1
+        else:
+            self.file.write(f"\tdt = float(sys.argv[{num_args}])\n")
+            num_args += 1
+        
         self.file.write("\tsimulation()\n")
         self.file.write("\n")
 

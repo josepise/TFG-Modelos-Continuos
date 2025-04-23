@@ -73,6 +73,7 @@ class Condition:
 
     def get_results_var(self):
         #Devuelve la lista de variables que modifican su valor.
+        print(self.result)
         return [self.result[i][0].lhs for i in range(len(self.result))]
 
     def get_constants(self):

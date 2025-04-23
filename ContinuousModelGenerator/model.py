@@ -1,5 +1,5 @@
 import yaml
-from .translators import (python_translator, cpp_translator, translator)
+from .translators import (python_translator, cpp_translator, java_translator, translator)
 from .equation import Equation
 from .conditions import Condition
 
@@ -29,23 +29,7 @@ class ContinuousModelGenerator:
         self.translator_type = None
         self.method = None
         self.translator = None
-        # self.set_translator()
-
-    # Inicializa el traductor apropiado basado en el tipo de traductor
-    def set_translator(self):
-        if self.translator_type == "python":
-            self.translator = python_translator.PythonSimulationGenerator(
-                self.equations, self.conditions, self.initial_conditions, self.time_range, 
-                self.file_name, self.method
-            )
-        elif self.translator_type == "cpp":
-            self.translator = cpp_translator.CppSimulationGenerator(
-                self.equations, self.conditions, self.initial_conditions, self.time_range, 
-                self.file_name, self.method
-            )
-        else:
-            raise ValueError("Tipo de traductor inválido. Elija 'python' o 'cpp'.")
-            
+          
     def get_equations(self):
         """
         Obtiene las ecuaciones.
@@ -87,6 +71,12 @@ class ContinuousModelGenerator:
         Obtiene el método numérico.
         """
         return self.method
+    
+    def get_list_languages(self):
+        """
+        Obtiene la lista de lenguajes disponibles.
+        """
+        return ["Python", "Cpp", "Java"]
 
     def generate_file(self):
         """
@@ -141,8 +131,26 @@ class ContinuousModelGenerator:
         Establece el método numérico.
         """
         self.method = method
-        self.check_components()
-        self.translator.set_method(method)
+
+    def set_translator(self):
+        if self.translator_type == "python":
+            self.translator = python_translator.PythonSimulationGenerator(
+                self.equations, self.conditions, self.initial_conditions, self.time_range, 
+                self.file_name, self.method
+            )
+        elif self.translator_type == "cpp":
+            self.translator = cpp_translator.CppSimulationGenerator(
+                self.equations, self.conditions, self.initial_conditions, self.time_range, 
+                self.file_name, self.method
+            )
+        elif self.translator_type == "java":
+            self.translator = translator.JavaSimulationGenerator(
+                self.equations, self.conditions, self.initial_conditions, self.time_range, 
+                self.file_name, self.method
+            )
+        else:
+            raise ValueError("Tipo de traductor inválido. Elija 'python', 'cpp' o 'java'.")
+    
 
 
     def add_equation(self, text_equation, text_var,constant):

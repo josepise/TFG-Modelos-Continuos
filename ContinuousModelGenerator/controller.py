@@ -139,6 +139,9 @@ class GeneratorController:
 
         self.model.edit_condition(text_exp,text_act,text_var,constants, index)
 
+    def get_list_languages(self):
+        return self.model.get_list_languages()                #Devuelve la lista de lenguajes disponibles
+
     def prepare_equation(self, text_equation, text_var, text_constant):
          
         #Eliminamos los espacios en blanco de la ecuación
@@ -197,7 +200,14 @@ class GeneratorController:
 
         return list_exp, list_act, text_var, constants
 
-    def generate(self):
+    def generate(self,lang :str, method:str, time_range:list, file_name:str = "simulation"):
+        """
+        Genera el archivo de salida.
+        Este método establece el lenguaje, el método numérico, el tipo de traductor, el rango 
+        de tiempo y el nombre del archivo
+        """
+        self.model.set_translator_type(lang)                                             #Establece el lenguaje
+        self.model.set_method(method)                                             #Establece el método numérico
         self.model.generate_file()                                              #Genera el archivo de salida
 
 
