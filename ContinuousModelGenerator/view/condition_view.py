@@ -180,7 +180,7 @@ class GUI_Condition(Toplevel):
         self.controler.add_condition(text_logic_exp,text_action,text_var, text_constants)
         window.destroy()
 
-    def edit_equation(self,text_logic_exp,text_action,text_var, text_constants, window):
+    def edit_condition(self,text_logic_exp,text_action,text_var, text_constants, window):
         self.controler.edit_condition(text_logic_exp,text_action,text_var, text_constants,self.selected)
         window.destroy()
 

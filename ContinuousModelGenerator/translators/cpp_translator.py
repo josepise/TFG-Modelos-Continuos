@@ -6,8 +6,8 @@ import os
 
 class CppSimulationGenerator(SimulationModelGenerator):
 
-    def __init__(self, equations, conditionals, initial_state, simulation_time, name_file, numerical_method="euler"):
-        super().__init__(equations, conditionals, initial_state, simulation_time, name_file, numerical_method)
+    def __init__(self, equations, conditionals, initial_state, simulation_time, path_file ,name_file, numerical_method="euler"):
+        super().__init__(equations, conditionals,initial_state, simulation_time, path_file, name_file, numerical_method)
         self.operators = {"sin": "std::sin", "cos": "std::cos", "tan": "std::tan", "exp": "std::exp", "log": "std::log", "sqrt": "std::sqrt"}
         self.pattern_pow = r'([a-zA-Z_][a-zA-Z_0-9]*(?:\[[^\]]+\])?|\(.+?\))\s*\*\*\s*(\d+(?:\.\d+)?)'
 
@@ -18,6 +18,7 @@ class CppSimulationGenerator(SimulationModelGenerator):
 
         self.set_var_identifiers()
         self.set_constants()
+
 
         # Write the file
         self.write_head_file()
@@ -33,6 +34,8 @@ class CppSimulationGenerator(SimulationModelGenerator):
             self.write_runge_kutta_fehlberg_method()
 
         self.write_main()
+
+        self.file.close()
 
     def prepare_equations(self, equation, subs_dict):
         # Reemplazamos las variables por su cadena inp y el índice correspondiente.
@@ -330,3 +333,12 @@ class CppSimulationGenerator(SimulationModelGenerator):
 
         self.file.write("    return 0;\n")
         self.file.write("}\n\n")
+    
+    def compile(self):
+        os.system(f"g++ -o {self.path_file}{self.name_file} {self.directory}{self.name_file}.cpp -std=c++11 -lm")
+
+    def run(self):
+        os.system(f"{self.path_file}{self.name_file} \
+                    {' '.join(map(str, self.constants_values.values()))} \
+                    {' '.join(map(str, self.initial_conditions.values()))} \
+                    {self.simulation_time[0]} {self.simulation_time[1]} {self.simulation_time[2]}")

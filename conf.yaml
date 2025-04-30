@@ -1,0 +1,13 @@
+equation:
+- name: a
+  expression: a*x + b
+  variable: x
+  parameters:
+    a: 0.0
+    b: 0.0
+conditions: []
+simulation:
+  time: null
+  output_file: simulation
+  translator: python
+  method: null

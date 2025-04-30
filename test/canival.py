@@ -9,7 +9,7 @@ eq3=Equation("p_4","p_3-p_4","p_3 p_4",{})
 
 equations = [eq,eq1,eq2,eq3]
 
-PythonSimulationGenerator(equations, [], {"p_1": 1, "p_2": 0, "p_3": 0, "p_4": 0}, [0,10,0.1], "canivals-euler","plot", "euler").generate_file()
+PythonSimulationGenerator(equations, [], {"p_1": 1, "p_2": 0, "p_3": 0, "p_4": 0}, [0,10,0.1],"/mnt/c/Users/jose/Documents/GitHub/TFG-Modelos-Continuos/models", "canivals-euler","plot", "runge-kutta-fehlberg").generate_file()
 # JavaSimulationGenerator(equations, [], {"p_1": 1, "p_2": 0, "p_3": 0, "p_4": 0}, [0,10,0.1], "canivals", "runge-kutta-fehlberg").generate_file()
 # PythonSimulationGenerator(equations, [], {"p_1": 1, "p_2": 0, "p_3": 0, "p_4": 0}, [0,10,0.1], "canivals-runge","csv", "runge-kutta-4").generate_file()
 

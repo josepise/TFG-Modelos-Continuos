@@ -6,14 +6,16 @@ import os
 class SimulationModelGenerator(ABC):
     
 
-    def __init__(self, equations, conditionals, initial_conditions, simulation_time, name_file, numerical_method="euler"):
+    def __init__(self, equations, conditionals, initial_conditions, simulation_time, path_file, name_file="simulation", numerical_method="euler"):
         self.equations = equations
         self.conditionals = conditionals
+        self.path_file = path_file
         self.name_file = name_file
         self.numerical_method = numerical_method
         self.initial_conditions=initial_conditions
         self.simulation_time = simulation_time
         self.var_identifiers = {} # Diccionario para almacenar los identificadores de las variables.
+        self.define_initial_sim()
     
     @abstractmethod
     def generate_file(self):
@@ -55,6 +57,18 @@ class SimulationModelGenerator(ABC):
         Set the numerical method.
         """
         self.numerical_method = method
+    
+    def set_directory(self, directory):
+        """
+        Set the directory for the generated file.
+        """
+        self.directory = directory
+
+    def get_available_output(self, language):
+        """
+        Get the available output formats for a given language.
+        """
+        return self.available_output[language]
 
     def check_initial_state(self):
 
@@ -70,10 +84,9 @@ class SimulationModelGenerator(ABC):
                 raise ValueError(f"La variable {symbol} no tiene un valor inicial asignado.")
 
     def set_var_identifiers(self):
-
-        #Comprobamos que cada variable de las ecuaciones tenga un valor inicial.
-        # self.check_initial_state()
-
+        """
+        Establece los identificadores de las variables en las ecuaciones y condiciones.
+        """
         index_var = 0 # Contador para los indices de las variables.
 
         #Iteramos sobre las ecuaciones y sus variables para definir un único identificador
@@ -138,6 +151,22 @@ class SimulationModelGenerator(ABC):
             for symbol in condition.get_simbol():
                 if symbol not in variables_equations:
                     raise ValueError(f"La variable {symbol} no está definida en las ecuaciones.")
+
+
+    def define_initial_sim(self):
+        """
+        Define el estado inicial de la simulación.
+        """
+
+        if self.initial_conditions is None:
+            self.initial_conditions = {}
+            for equation in self.equations:
+                for symbol in equation.get_symbol():
+                    if str(symbol) not in self.initial_conditions:
+                        self.initial_conditions[str(symbol)] = 0.0
+
+        if self.simulation_time is None:
+            self.simulation_time = [0,50,0.1] # [t0, tf, dt]
 
 
 

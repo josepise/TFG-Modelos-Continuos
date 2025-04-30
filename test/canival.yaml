@@ -1,0 +1,24 @@
+equation:
+- name: p_1
+  expression: a*p_4 - p_1*p_2 - p_1
+  variable: p_1 p_2 p_4
+  parameters:
+    a: 2.0
+- name: p_2
+  expression: p_1 - p_2*p_3 - p_2
+  variable: p_1 p_2 p_3
+  parameters: {}
+- name: p_3
+  expression: p_2 - p_3*p_4 - p_3
+  variable: p_2 p_3 p_4
+  parameters: {}
+- name: p_4
+  expression: p_3 - p_4
+  variable: p_3 p_4
+  parameters: {}
+conditions: []
+simulation:
+  time: null
+  output_file: null
+  translator: java
+  method: euler-improved

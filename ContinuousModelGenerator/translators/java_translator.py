@@ -6,8 +6,8 @@ import sympy as sp
 
 class JavaSimulationGenerator(SimulationModelGenerator):
 
-    def __init__(self, equations, conditionals, initial_state, simulation_time, name_file, numerical_method="euler"):
-        super().__init__(equations, conditionals, initial_state, simulation_time, name_file, numerical_method)
+    def __init__(self, equations, conditionals, initial_state, simulation_time,path_file, name_file, numerical_method="euler"):
+        super().__init__(equations, conditionals,initial_state, simulation_time, path_file, name_file, numerical_method)
         self.operators = {"sin": "Math.sin", "cos": "Math.cos", "tan": "Math.tan", "exp": "Math.exp", "log": "Math.log", "sqrt": "Math.sqrt"}
         self.pattern_pow = r'(inp\.get\(\d+\))\s*\*\*\s*(\d+)'
 
@@ -34,6 +34,7 @@ class JavaSimulationGenerator(SimulationModelGenerator):
             self.write_runge_kutta_fehlberg_method()
 
         self.write_main()
+        self.file.close()
 
     def prepare_equations(self, equation, subs_dict):
         eq = equation.get_equation().subs(subs_dict)
@@ -324,3 +325,12 @@ class JavaSimulationGenerator(SimulationModelGenerator):
 
         self.file.write("\t}\n")
         self.file.write("}\n")
+
+    def compile(self):
+        os.system(f"javac {self.directory}{self.name_file}.java")
+
+    def run(self):
+        os.system(f"java -cp {self.directory} {self.name_file} \
+                 {' '.join(map(str, self.constants_values.values()))} \
+                 {' '.join(map(str, self.initial_conditions.values()))} \
+                 {self.simulation_time[0]} {self.simulation_time[1]} {self.simulation_time[2]}")

@@ -1,0 +1,29 @@
+equation:
+- name: v_w
+  expression: k*p*u_t/T - v_w/T
+  variable: v_w
+  parameters:
+    k: 0.0
+    T: 0.0
+    p: 0.0
+    u_t: 0.0
+conditions:
+- expressions: vr-(v_w+v_e)<-s
+  actions: u_t=0
+  variables: v_w
+  parameters: 
+    s: 0.0
+    vr: 0.0
+    v_e: 0.0
+- expressions: vr-(v_w+v_e)>s
+  actions: u_t=1
+  variables: v_w
+  parameters:
+    s: 0.0
+    vr: 0.0
+    v_e: 0.0
+simulation:
+  time: null
+  output_file: null
+  translator: python
+  method: null

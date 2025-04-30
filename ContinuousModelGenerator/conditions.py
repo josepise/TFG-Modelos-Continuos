@@ -36,6 +36,7 @@ class Condition:
             self.result[i] = sp.Eq(sp.sympify(lhs), sp.sympify(rhs))
 
 
+
     def get_available_operators(self):  
         #Devuelve la lista de operadores disponibles.
         return self.avaliable_operators

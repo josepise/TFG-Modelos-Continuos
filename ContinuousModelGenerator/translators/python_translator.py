@@ -5,17 +5,15 @@ import os
 
 class PythonSimulationGenerator(SimulationModelGenerator):
 
-    def __init__(self, equations, conditionals, initial_state, simulation_time, name_file, output, numerical_method="euler"):
-        super().__init__(equations, conditionals,initial_state, simulation_time, name_file, numerical_method)
+    def __init__(self, equations, conditionals, initial_state, simulation_time, path_file ,name_file, output="csv", numerical_method="euler"):
+        super().__init__(equations, conditionals,initial_state, simulation_time, path_file, name_file, numerical_method)
         self.operators={"sin":"np.sin", "cos":"np.cos", "tan":"np.tan", "exp":"np.exp", "log":"np.log", "sqrt":"np.sqrt"}
         self.output=output
 
     def generate_file(self):
         
         #Creamos el archivo de simulación continua en python en la carpeta 
-        # ../models/name_file.py.
-        os.makedirs("./models/", exist_ok=True)
-        self.file = open(f"./models/{self.name_file}.py", "w")
+        self.file = open(f"{self.path_file}/{self.name_file}.py", "w")
 
         #Escribimos el archivo.
         self.set_var_identifiers()
@@ -36,6 +34,7 @@ class PythonSimulationGenerator(SimulationModelGenerator):
 
         self.write_simulation()
         self.main()
+        self.file.close()
 
     def write_head_file(self):
         #Añadimos los imports necesarios.
@@ -356,3 +355,13 @@ class PythonSimulationGenerator(SimulationModelGenerator):
 
         self.file.write(f"{cadena} \\n')\n")
 
+    def compile(self):
+        # No se necesita compilación para scripts de Python
+        pass
+
+    def run(self):
+        # Run the Python script with the required arguments
+        os.system(f"python {self.directory}{self.name_file}.py \
+                 {' '.join(map(str, self.constants_values.values()))} \
+                 {' '.join(map(str, self.initial_conditions.values()))} \
+                 {self.simulation_time[0]} {self.simulation_time[1]} {self.simulation_time[2]}")

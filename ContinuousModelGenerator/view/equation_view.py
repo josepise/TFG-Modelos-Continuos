@@ -17,11 +17,11 @@ class GUI_Equation(Toplevel):
 
 
         self.geometry("650x268")
-        self.configure(bg = "#959494")
+        self.configure(bg = "#92A6C0")
 
         canvas = Canvas(
             self,
-            bg = "#959494",
+            bg = "#92A6C0",
             height = 268,
             width = 650,
             bd = 0,

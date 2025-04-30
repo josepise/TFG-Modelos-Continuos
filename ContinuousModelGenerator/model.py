@@ -29,6 +29,12 @@ class ContinuousModelGenerator:
         self.translator_type = None
         self.method = None
         self.translator = None
+        self.output = None
+        self.available_output = {"java": ["csv"], "python": ["csv","plot"], "cpp": ["csv"]}
+        self.available_methods = {"Euler": "euler", "Euler Mejorado": "euler-improved",
+                                  "Runge Kutta 4": "runge-kutta-4", 
+                                  "Runge Kutta Fehlberg": "runge-kutta-fehlberg"}
+
           
     def get_equations(self):
         """
@@ -72,11 +78,34 @@ class ContinuousModelGenerator:
         """
         return self.method
     
+    def get_output(self):
+        """
+        Obtiene el tipo de salida.
+        """
+        return self.output
+    
     def get_list_languages(self):
         """
         Obtiene la lista de lenguajes disponibles.
         """
-        return ["Python", "Cpp", "Java"]
+        return self.available_output.keys()
+    
+    def get_list_available_output(self):
+        """
+        Obtiene la lista de tipos de salida disponibles.
+        """
+        outputs= ["Seleccionar"]
+
+        if self.translator_type is not None:
+            outputs=self.available_output[self.translator_type]
+
+        return outputs
+    
+    def get_list_available_methods(self):
+        """
+        Obtiene la lista de métodos numéricos disponibles.
+        """
+        return self.available_methods.keys()
 
     def generate_file(self):
         """
@@ -117,54 +146,68 @@ class ContinuousModelGenerator:
         Establece el nombre del archivo.
         """
         self.file_name = file_name
-        self.translator.set_file_name(file_name)
+
+    def set_path(self, path):
+        """
+        Establece el directorio de salida.
+        """
+        self.path_file= path
     
     def set_translator_type(self, translator_type):
         """"
         Establece el tipo de traductor.
         """
         self.translator_type = translator_type
-        self.set_translator()
     
+    def set_output(self, output):
+        """
+        Establece el tipo de salida.
+        """
+        self.output = output
+
     def set_method(self, method):
         """
         Establece el método numérico.
         """
-        self.method = method
+        self.method = self.available_methods[method]
 
     def set_translator(self):
         if self.translator_type == "python":
             self.translator = python_translator.PythonSimulationGenerator(
                 self.equations, self.conditions, self.initial_conditions, self.time_range, 
-                self.file_name, self.method
+                self.path_file, self.file_name, self.output, self.method
             )
         elif self.translator_type == "cpp":
             self.translator = cpp_translator.CppSimulationGenerator(
                 self.equations, self.conditions, self.initial_conditions, self.time_range, 
-                self.file_name, self.method
+                self.path_file, self.file_name, self.method
             )
         elif self.translator_type == "java":
-            self.translator = translator.JavaSimulationGenerator(
+            self.translator = java_translator.JavaSimulationGenerator(
                 self.equations, self.conditions, self.initial_conditions, self.time_range, 
-                self.file_name, self.method
+                self.path_file, self.file_name, self.method
             )
         else:
             raise ValueError("Tipo de traductor inválido. Elija 'python', 'cpp' o 'java'.")
     
+    def set_output_type(self, output_type):
+        """
+        Establece el tipo de salida.
+        """
+        self.output = output_type
 
-
-    def add_equation(self, text_equation, text_var,constant):
-        eq = Equation("a",text_equation, text_var, constant)
+    def add_equation(self,var_eq, text_equation, text_var,constant):
+        eq = Equation(var_eq,text_equation, text_var, constant)
         self.equations.append(eq)
 
-    def edit_equation(self, text_equation, text_var, constant, index):
+    def edit_equation(self,var_eq, text_equation, text_var, constant, index):
         """
         Edita una ecuación existente en la lista de ecuaciones.
         """
         if index < 0 or index >= len(self.equations):
             raise IndexError("Índice fuera de rango.")
         
-        eq = Equation("a",text_equation, text_var, constant)
+        eq = Equation(var_eq,text_equation, text_var, constant)
         self.equations[index] = eq
 
     def add_condition(self, text_exp ,  text_action, text_var,text_constant):
@@ -229,7 +272,7 @@ class ContinuousModelGenerator:
             raise ValueError("El método numérico debe ser 'euler' o 'rk4'.")
         
     
-    def save_config(self, file_path, filename="config.yaml"):
+    def save_config(self, file_path):
         """
         Guarda la configuración actual en un archivo.
         """
@@ -247,22 +290,24 @@ class ContinuousModelGenerator:
                     "expressions": cond.get_text_condition(),
                     "actions": cond.get_text_result(),
                     "variables": cond.get_text_symbols(),
-                    "parameters": cond.get_text_constants()
+                    "parameters": cond.get_constants_values()
                 } for cond in self.conditions
             ],
             "simulation": {
                 "time": self.time_range,
                 "output_file": self.file_name,
+                "output_format": self.output,   
+                "translator": self.translator_type,
                 "method": self.method
             }
         }
 
-        with open(filename, "w") as file:
+        with open(file_path, "w") as file:
             yaml.dump(config, file, sort_keys=False)
 
     @classmethod
-    def load_config(cls, file_path, filename="config.yaml"):
-        with open(filename, "r") as file:
+    def load_config(cls, file_path):
+        with open(file_path, "r") as file:
             config = yaml.safe_load(file)
 
         equation = [
@@ -271,7 +316,12 @@ class ContinuousModelGenerator:
         ]
 
         conditions = [
-            Condition(c["expressions"], c["actions"], c["variables"], c["parameters"])
+            Condition(
+            c["expressions"].split(",") if "," in c["expressions"] else [c["expressions"]],
+            c["actions"].split(",") if "," in c["actions"] else [c["actions"]],
+            c["variables"],
+            c["parameters"]
+            )
             for c in config["conditions"]
         ]
 
@@ -284,4 +334,6 @@ class ContinuousModelGenerator:
         instance.time_range = sim_data["time"]
         instance.file_name = sim_data["output_file"]
         instance.method = sim_data["method"]
+        instance.translator_type = sim_data["translator"]
+        instance.output = sim_data["output_format"]
         return instance
