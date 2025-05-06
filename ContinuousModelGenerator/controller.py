@@ -1,5 +1,5 @@
 from .model import ContinuousModelGenerator as SimulationModel  #Importa la clase SimulationModel del archivo model.py
-from .view.main_view import GUI as SimulationView  #Importa la clase SimulationView del archivo view.py
+from .view.main_view_ctk import GUI_CTK  as SimulationView  #Importa la clase SimulationView del archivo view.py
 from sympy import symbols, sympify
 
 
@@ -135,6 +135,12 @@ class GeneratorController:
     def get_list_methods(self):
         return self.model.get_list_available_methods()                  #Devuelve la lista de métodos disponibles
     
+    def get_variables(self):
+        return list(self.model.get_variables())                             #Devuelve la lista de variables del modelo
+    
+    def get_parameters(self):
+        return self.model.get_parameters()                            #Devuelve la lista de parámetros del modelo
+    
     def edit_equation(self, text_equation, text_var, text_constant, name):
         name = name.replace("Ecuacion_", "")
         index = int(name) - 1
@@ -159,7 +165,6 @@ class GeneratorController:
 
     def set_method(self, method):
         self.model.set_method(method)                                #Establece el método numérico del modelo
-        self.view.update_dropdown_method(self.get_list_methods())      #Actualiza la lista de salidas en la vista
 
     def set_output(self, output):
         self.model.set_output_type(output)                          #Establece el tipo de salida del modelo
@@ -240,12 +245,42 @@ class GeneratorController:
         self.model.set_translator()                                             #Establece el lenguaje
         self.model.generate_file()                                              #Genera el archivo de salida
 
+    def execute(self):
+        """
+        Ejecuta el archivo de salida.
+        Este método ejecuta el archivo de salida generado por el modelo.
+        """
+        view_simulation=self.view.get_simulation_view()                               #Obtenemos la vista de simulación
+        
+        #Creamos la cadena de argumentos para la ejecución del archivo
+        args=""
+        entry_args=view_simulation.get_entries_args()                         #Obtenemos los argumentos de entrada de la vista
+
+        for i in self.model.get_constants():
+            args+= f"{entry_args[i].get()} "
+
+        for i in self.model.get_var_identifiers():
+            args+=f"{entry_args[i].get()} "
+
+
+        time_args=view_simulation.get_time_args()                         #Obtenemos los argumentos de tiempo de la vista
+
+        args+=f"{time_args['t0']} {time_args['tf']} {time_args['dt_tol']} "
+
+        self.model.execute_simulation(args)                                              #Ejecuta el archivo de salida con los argumentos de entrada y tiempo
+
+        data=self.model.get_output_simulation_file("as_output_py.csv")                #Obtenemos el archivo de salida
+        
+        view_simulation.update_result_terminal(data)
+        view_simulation.update_result_plot(data)                                
+        
     def load_config(self, file_path:str):
         self.model=SimulationModel.load_config(file_path)                                          #Carga el archivo de configuración
         self.view.update_dropdown_condition(self.get_list_conditions())            #Actualiza la lista de condiciones en la vista
         self.view.update_dropdown_equation(self.get_list_equations())            #Actualiza la lista de ecuaciones en la vista
         self.view.update_dropdown_lang(self.get_list_languages(),self.model.get_translator_type())            #Actualiza la lista de lenguajes en la vista
         self.view.update_dropdown_output(self.get_list_output(),self.model.get_output())            #Actualiza la lista de salidas en la vista
+        self.view.update_dropdown_method(self.get_list_methods(),self.model.get_method())            #Actualiza la lista de métodos en la vista
 
     def save_config(self, file_path:str):
         self.model.save_config(file_path)                                          #Guarda el archivo de configuración

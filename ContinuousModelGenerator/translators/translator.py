@@ -21,6 +21,19 @@ class SimulationModelGenerator(ABC):
     def generate_file(self):
         pass
 
+
+    def get_constants(self):
+        """
+        Get the constants of the equations and conditions.
+        """
+        return self.constants
+    
+    def get_var_identifiers(self):
+        """
+        Get the variable identifiers.
+        """
+        return self.var_identifiers
+    
     def set_equations(self, equations):
         """
         Set the equations.
@@ -134,6 +147,30 @@ class SimulationModelGenerator(ABC):
         str_var=" ".join(f"<{x}>" for x in self.var_identifiers.keys())
         
         return f"{str_constant} {str_var}"
+    
+    def get_constants(self) -> list:
+        """
+        Devuelve una lista con las constantes de las ecuaciones y condiciones.
+        """
+        return self.constants
+    
+    def get_constants_values(self) -> dict:
+        """
+        Devuelve un diccionario con los valores de las constantes de las ecuaciones y condiciones.
+        """
+        return self.constants_values
+    
+    def get_var_identifiers(self) -> dict:
+        """
+        Devuelve un diccionario con los identificadores de las variables.
+        """
+        return self.var_identifiers
+    
+    def get_initial_conditions(self) -> dict:
+        """
+        Devuelve un diccionario con las condiciones iniciales de las variables.
+        """
+        return self.initial_conditions
 
     def check_equations_conditions(self):
         """

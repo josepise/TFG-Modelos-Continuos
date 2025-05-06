@@ -1,4 +1,4 @@
-from ContinuousModelGenerator import GUI, GeneratorController
+from ContinuousModelGenerator import GUI_CTK, GeneratorController
 
 if __name__ == "__main__":
     controller= GeneratorController()   

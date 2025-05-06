@@ -78,13 +78,6 @@ class PythonSimulationGenerator(SimulationModelGenerator):
         self.file.write(f"tf = {self.simulation_time[1]}\n")
         self.file.write(f"dt = {self.simulation_time[2]}\n")
         
-        #En caso de que el método de integración sea Runge-Kutta-Fehlberg
-        # añadimos la lista que contendrá los pasos de tiempo.
-        if self.numerical_method == "runge-kutta-fehlberg":
-            self.file.write("t=[t0]\n")
-        else:
-            self.file.write("t = np.arange(t0, tf+dt, dt)\n")
-        
         self.file.write("\n\n")
 
     def write_conditionals(self):
@@ -316,6 +309,13 @@ class PythonSimulationGenerator(SimulationModelGenerator):
         else:
             self.file.write(f"\tdt = float(sys.argv[{num_args}])\n")
             num_args += 1
+
+        #En caso de que el método de integración sea Runge-Kutta-Fehlberg
+        # añadimos la lista que contendrá los pasos de tiempo.
+        if self.numerical_method == "runge-kutta-fehlberg":
+            self.file.write("\tt=[t0]\n")
+        else:
+            self.file.write("\tt = np.arange(t0, tf+dt, dt)\n")
         
         self.file.write("\tsimulation()\n")
         self.file.write("\n")
@@ -359,9 +359,8 @@ class PythonSimulationGenerator(SimulationModelGenerator):
         # No se necesita compilación para scripts de Python
         pass
 
-    def run(self):
+    def run(self, args=None):
+    
         # Run the Python script with the required arguments
-        os.system(f"python {self.directory}{self.name_file}.py \
-                 {' '.join(map(str, self.constants_values.values()))} \
-                 {' '.join(map(str, self.initial_conditions.values()))} \
-                 {self.simulation_time[0]} {self.simulation_time[1]} {self.simulation_time[2]}")
+        os.system(f"python3 {self.path_file}/{self.name_file}.py \
+                 {args} ")

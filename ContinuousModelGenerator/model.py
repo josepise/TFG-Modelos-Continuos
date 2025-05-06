@@ -42,6 +42,18 @@ class ContinuousModelGenerator:
         """
         return self.equations
     
+    def get_variables(self) :
+        """
+        Obtiene las variables de las ecuaciones.
+        """
+        return self.translator.get_var_identifiers().keys()
+    
+    def get_parameters(self):
+        """
+        Obtiene los parámetros de las ecuaciones.
+        """
+        return self.translator.get_constants()
+    
     def get_conditions(self):
         """
         Obtiene las condiciones.
@@ -100,6 +112,19 @@ class ContinuousModelGenerator:
             outputs=self.available_output[self.translator_type]
 
         return outputs
+    
+    def get_constants(self):
+        """
+        Obtiene los parámetros de las ecuaciones y condiciones.
+        """
+        return self.translator.get_constants()
+    
+    def get_var_identifiers(self):
+
+        """
+        Obtiene los identificadores de las variables.
+        """
+        return self.translator.get_var_identifiers()
     
     def get_list_available_methods(self):
         """
@@ -271,7 +296,22 @@ class ContinuousModelGenerator:
         if self.method not in ["euler", "rk4"]:
             raise ValueError("El método numérico debe ser 'euler' o 'rk4'.")
         
-    
+    def execute_simulation(self,args):
+        """
+        Ejecuta la simulación utilizando el traductor seleccionado.
+        """
+        self.translator.run(args)
+
+    def get_output_simulation_file(self, file_path):
+        """
+        Lee el archivo de salida de la simulación y devuelve su contenido.
+        """
+        with open(file_path) as f:
+            lines = f.readlines()
+            content = [line.strip().split() for line in lines]
+        
+        return content
+
     def save_config(self, file_path):
         """
         Guarda la configuración actual en un archivo.
@@ -326,7 +366,6 @@ class ContinuousModelGenerator:
         ]
 
         sim_data = config["simulation"]
-
 
         instance = cls()
         instance.equations = equation

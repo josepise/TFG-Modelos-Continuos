@@ -25,5 +25,6 @@ conditions:
 simulation:
   time: null
   output_file: null
+  output_format: csv
   translator: python
-  method: null
+  method: euler-improved
