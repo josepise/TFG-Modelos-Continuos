@@ -335,10 +335,8 @@ class CppSimulationGenerator(SimulationModelGenerator):
         self.file.write("}\n\n")
     
     def compile(self):
-        os.system(f"g++ -o {self.path_file}{self.name_file} {self.directory}{self.name_file}.cpp -std=c++11 -lm")
+        os.system(f"g++ -o {self.path_file}/{self.name_file} {self.path_file}/{self.name_file}.cpp -std=c++11 -lm")
 
-    def run(self):
-        os.system(f"{self.path_file}{self.name_file} \
-                    {' '.join(map(str, self.constants_values.values()))} \
-                    {' '.join(map(str, self.initial_conditions.values()))} \
-                    {self.simulation_time[0]} {self.simulation_time[1]} {self.simulation_time[2]}")
+    def run(self, args):
+        os.system(f"{self.path_file}/{self.name_file} \
+                    {args}")

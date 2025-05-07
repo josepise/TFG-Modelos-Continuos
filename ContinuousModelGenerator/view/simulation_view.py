@@ -150,7 +150,7 @@ class GUI_Simulation(ctk.CTkToplevel):
         fig = Figure(figsize=(5, 4), dpi=100)
         ax = fig.add_subplot(111)
 
-        # Graficar cada variable (p_1, p_2, ...)
+        # Graficar cada variable
         for i in range(1, len(header)):
             ax.plot(t, columns[i], label=header[i])
 

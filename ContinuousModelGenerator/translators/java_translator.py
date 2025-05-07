@@ -327,10 +327,8 @@ class JavaSimulationGenerator(SimulationModelGenerator):
         self.file.write("}\n")
 
     def compile(self):
-        os.system(f"javac {self.directory}{self.name_file}.java")
+        os.system(f"javac {self.path_file}/{self.name_file}.java")
 
-    def run(self):
-        os.system(f"java -cp {self.directory} {self.name_file} \
-                 {' '.join(map(str, self.constants_values.values()))} \
-                 {' '.join(map(str, self.initial_conditions.values()))} \
-                 {self.simulation_time[0]} {self.simulation_time[1]} {self.simulation_time[2]}")
+    def run(self,args=None):
+        os.system(f"java -cp {self.path_file} {self.name_file} \
+                 {args} ")

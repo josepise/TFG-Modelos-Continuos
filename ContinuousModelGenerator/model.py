@@ -83,7 +83,7 @@ class ContinuousModelGenerator:
         Obtiene el tipo de traductor.
         """
         return self.translator_type
-    
+        
     def get_method(self):
         """
         Obtiene el método numérico.
@@ -300,6 +300,7 @@ class ContinuousModelGenerator:
         """
         Ejecuta la simulación utilizando el traductor seleccionado.
         """
+        self.translator.compile()
         self.translator.run(args)
 
     def get_output_simulation_file(self, file_path):

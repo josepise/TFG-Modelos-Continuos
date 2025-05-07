@@ -1,4 +1,5 @@
 import customtkinter as ctk
+import tkinter as tk
 from customtkinter import CTkImage 
 from tkinter import Menu, filedialog
 from PIL import Image
@@ -14,16 +15,16 @@ class GUI_CTK:
 
         self.route_img = os.path.join("ContinuousModelGenerator", "resources", "img")
         self.controller = controller
-
+        #ECEDF1
         # Colores de la interfaz
         self.color_bg = "#352F6B"
-        self.color_text = "#ECEDF1"
+        self.color_text = "#352F6B"
         self.color_button_drop = "#058CB1"
         self.color_dropdown = "#ECEDF1"
         self.color_aux = "#352F6B"
 
         self.window = ctk.CTk()
-        self.window.geometry("811x468")
+        self.window.geometry("468x468")
         self.window.configure(fg_color=self.color_bg)
         self.window.resizable(False, False)
         # self.window.overrideredirect(True)
@@ -45,33 +46,40 @@ class GUI_CTK:
     def create_widgets(self):
         self.top_menu()
 
-        self.create_label("Lenguaje", 23, 26)
+        #Introducimos frame que contenga los elementos 
+        self.main_frame = ctk.CTkFrame(self.window, width=400, height= 250, corner_radius=15)
+        self.main_frame.pack(side="top", anchor="nw", padx=10, pady=10)
+
+        self.create_label(self.main_frame,"Lenguaje", 23, 26)
         options = list(self.controller.get_list_languages())
         self.update_dropdown_lang(options)
 
-        self.create_label("Salida", 23, 58)
+        self.create_label(self.main_frame,"Salida", 23, 58)
         options = list(self.controller.get_list_output())
         self.update_dropdown_output(options)
 
-        self.create_label("Método\nIntegración", 23, 97)
+        self.create_label(self.main_frame,"Método\nIntegración", 23, 97)
         options = list(self.controller.get_list_methods())
         self.update_dropdown_method(options)
 
         self.widget_equation()
         self.widget_condition()
 
+        self.button_frame = ctk.CTkFrame(self.window, fg_color="transparent")
+        self.button_frame.pack(side="bottom", anchor="e", pady=10, padx=10)
+
         self.generate_button = ctk.CTkButton(
-            self.window, text="Generar", command=self.generate_program, width=125, height=50
+            self.button_frame, text="Generar", command=self.generate_program, width=125, height=50
         )
-        self.generate_button.place(x=659, y=399)
+        self.generate_button.pack(side="left", padx=10,pady=10)
 
         self.simulate_button = ctk.CTkButton(
-            self.window, text="Simular", command=self.init_sim_view, width=125, height=50
+            self.button_frame, text="Simular", command=self.init_sim_view, width=125, height=50
         )
-        self.simulate_button.place(x=520, y=399)
+        self.simulate_button.pack(side="left", padx=10 ,pady=10)
 
-    def create_label(self, text, x, y):
-        label = ctk.CTkLabel(self.window, text=text, text_color=self.color_text, font=("Roboto", 12, "bold"), anchor="w", justify="left")
+    def create_label(self, father, text, x, y):
+        label = ctk.CTkLabel(father, text=text, text_color=self.color_text, font=("Roboto", 12, "bold"), anchor="w", justify="left")
         label.place(x=x, y=y)
 
     def top_menu(self):
@@ -100,38 +108,38 @@ class GUI_CTK:
 
 
     def widget_equation(self):
-        self.create_label("Ecuaciones", 23, 139)
+        self.create_label(self.main_frame,"Ecuaciones", 23, 139)
         self.update_dropdown_equation(self.controller.get_list_equations())
 
         self.add_equation_button = ctk.CTkButton(
-            self.window, text="", image=self.add_img, command=lambda: GUI_Equation(self.window, self.controller, "add"), width=20, height=20, fg_color="transparent"
+            self.main_frame, text="", image=self.add_img, command=lambda: GUI_Equation(self.window, self.controller, "add"), width=20, height=20, fg_color="transparent"
         )
         self.add_equation_button.place(x=317, y=136)
 
         self.edit_equation_button = ctk.CTkButton(
-            self.window, text="", image=self.edit_img, command=self.modify_equation, width=20, height=20, fg_color="transparent"
+            self.main_frame, text="", image=self.edit_img, command=self.modify_equation, width=20, height=20, fg_color="transparent"
         )
         self.edit_equation_button.place(x=349, y=136)
 
     def widget_condition(self):
-        self.create_label("Condiciones", 23, 179)
+        self.create_label(self.main_frame,"Condiciones", 23, 179)
         self.update_dropdown_condition(self.controller.get_list_conditions())
 
         self.add_condition_button = ctk.CTkButton(
-            self.window, text="", image=self.add_img, command=lambda: GUI_Condition(self.window, self.controller, "add"), width=20, height=20, fg_color="transparent"
+            self.main_frame, text="", image=self.add_img, command=lambda: GUI_Condition(self.window, self.controller, "add"), width=20, height=20, fg_color="transparent"
         )
         self.add_condition_button.place(x=317, y=176)
 
         self.edit_condition_button = ctk.CTkButton(
-            self.window, text="", image=self.edit_img, command=self.modify_condition, width=20, height=20, fg_color="transparent"
+            self.main_frame, text="", image=self.edit_img, command=self.modify_condition, width=20, height=20, fg_color="transparent"
         )
-        self.edit_condition_button.place(x=349, y=182)
+        self.edit_condition_button.place(x=349, y=176)
 
     def update_dropdown_condition(self, options):
         if not options:
             options = ["No existen condiciones."]
     
-        self.dropdown_cond = ctk.CTkOptionMenu(self.window, values=options,
+        self.dropdown_cond = ctk.CTkOptionMenu(self.main_frame, values=options,
                                                width=198, height=20, fg_color=self.color_dropdown, button_color=self.color_button_drop,
                                                text_color=self.color_aux)
         self.dropdown_cond.set("Seleccionar")
@@ -140,7 +148,7 @@ class GUI_CTK:
     def update_dropdown_equation(self, options):
         if not options:
             options = ["No existen ecuaciones."]
-        self.dropdown_eq = ctk.CTkOptionMenu(self.window, values=options,
+        self.dropdown_eq = ctk.CTkOptionMenu(self.main_frame, values=options,
                                              width=198, height=20, fg_color=self.color_dropdown, button_color=self.color_button_drop,
                                              text_color=self.color_aux)
         self.dropdown_eq.set("Seleccionar")
@@ -148,7 +156,7 @@ class GUI_CTK:
 
     def update_dropdown_lang(self, options, selected_option=None):
         options = list(options) or ["Seleccionar"]
-        self.dropdown_lang = ctk.CTkOptionMenu(self.window, values=options, command=self.controller.set_language,
+        self.dropdown_lang = ctk.CTkOptionMenu(self.main_frame, values=options, command=self.controller.set_language,
                                                width=198, height=20, fg_color=self.color_dropdown, button_color=self.color_button_drop,
                                                text_color=self.color_aux)
         self.dropdown_lang.set(selected_option or "Seleccionar")
@@ -156,7 +164,7 @@ class GUI_CTK:
 
     def update_dropdown_output(self, options, selected_option=None):
         options = list(options) or ["Seleccionar"]
-        self.dropdown_output = ctk.CTkOptionMenu(self.window, values=options, command=self.controller.set_output,
+        self.dropdown_output = ctk.CTkOptionMenu(self.main_frame, values=options, command=self.controller.set_output,
                                                  width=198, height=20, fg_color=self.color_dropdown, button_color=self.color_button_drop,
                                                  text_color=self.color_aux)
         self.dropdown_output.set(selected_option or "Seleccionar")
@@ -164,7 +172,7 @@ class GUI_CTK:
 
     def update_dropdown_method(self, options, selected_option=None):
         options = list(options) or ["Seleccionar"]
-        self.dropdown_method = ctk.CTkOptionMenu(self.window, values=options, command=self.controller.set_method,
+        self.dropdown_method = ctk.CTkOptionMenu(self.main_frame, values=options, command=self.controller.set_method,
                                                  width=198, height=20, fg_color=self.color_dropdown, button_color=self.color_button_drop,
                                                  text_color=self.color_aux)
         self.dropdown_method.set(selected_option or "Seleccionar")
@@ -173,12 +181,12 @@ class GUI_CTK:
     def modify_equation(self):
         selected = self.dropdown_eq.get()
         if selected != "Seleccionar":
-            GUI_Equation(self.window, self.controller, "edit", selected)
+            GUI_Equation(self.main_frame, self.controller, "edit", selected)
 
     def modify_condition(self):
         selected = self.dropdown_cond.get()
         if selected != "Seleccionar":
-            GUI_Condition(self.window, self.controller, "edit", selected)
+            GUI_Condition(self.main_frame, self.controller, "edit", selected)
 
     def open_config_file(self):
         ruta = filedialog.askopenfilename(filetypes=[("YAML files", "*.yaml")], title="Selecciona un archivo")

@@ -241,7 +241,7 @@ class GeneratorController:
         """
         # print("Generando archivo de salida...")
         self.model.set_file_name(name)                                          #Establece el nombre del archivo de salida
-        self.model.set_path(path)                                          #Establece el directorio del archivo de salida
+        self.model.set_path(path)                                               #Establece el directorio del archivo de salida
         self.model.set_translator()                                             #Establece el lenguaje
         self.model.generate_file()                                              #Genera el archivo de salida
 
@@ -254,7 +254,7 @@ class GeneratorController:
         
         #Creamos la cadena de argumentos para la ejecución del archivo
         args=""
-        entry_args=view_simulation.get_entries_args()                         #Obtenemos los argumentos de entrada de la vista
+        entry_args=view_simulation.get_entries_args()                                 #Obtenemos los argumentos de entrada de la vista
 
         for i in self.model.get_constants():
             args+= f"{entry_args[i].get()} "
@@ -263,13 +263,16 @@ class GeneratorController:
             args+=f"{entry_args[i].get()} "
 
 
-        time_args=view_simulation.get_time_args()                         #Obtenemos los argumentos de tiempo de la vista
+        time_args=view_simulation.get_time_args()                                     #Obtenemos los argumentos de tiempo de la vista
 
         args+=f"{time_args['t0']} {time_args['tf']} {time_args['dt_tol']} "
 
-        self.model.execute_simulation(args)                                              #Ejecuta el archivo de salida con los argumentos de entrada y tiempo
+        self.model.execute_simulation(args)                                           #Ejecuta el archivo de salida con los argumentos de entrada y tiempo
 
-        data=self.model.get_output_simulation_file("as_output_py.csv")                #Obtenemos el archivo de salida
+        translator_type = self.model.get_translator_type()                            #Obtenemos el tipo de traductor
+        name_file=self.model.get_file_name()
+
+        data = self.model.get_output_simulation_file(f"{name_file}_output_{translator_type}.csv")  # Obtenemos el archivo de salida
         
         view_simulation.update_result_terminal(data)
         view_simulation.update_result_plot(data)                                
