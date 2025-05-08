@@ -1,6 +1,5 @@
 from .model import ContinuousModelGenerator as SimulationModel  #Importa la clase SimulationModel del archivo model.py
 from .view.main_view_ctk import GUI_CTK  as SimulationView  #Importa la clase SimulationView del archivo view.py
-from sympy import symbols, sympify
 
 
 class GeneratorController:
@@ -244,6 +243,7 @@ class GeneratorController:
         self.model.set_path(path)                                               #Establece el directorio del archivo de salida
         self.model.set_translator()                                             #Establece el lenguaje
         self.model.generate_file()                                              #Genera el archivo de salida
+        self.view.simulate_button.configure(state="normal")            #Habilita el botón de simulación en la vista  
 
     def execute(self):
         """
@@ -275,7 +275,9 @@ class GeneratorController:
         data = self.model.get_output_simulation_file(f"{name_file}_output_{translator_type}.csv")  # Obtenemos el archivo de salida
         
         view_simulation.update_result_terminal(data)
-        view_simulation.update_result_plot(data)                                
+        view_simulation.update_result_plot(data)     
+
+                               
         
     def load_config(self, file_path:str):
         self.model=SimulationModel.load_config(file_path)                                          #Carga el archivo de configuración
@@ -289,38 +291,6 @@ class GeneratorController:
         self.model.save_config(file_path)                                          #Guarda el archivo de configuración
 
 
-    def delete_equation(self, equation):
-        self.model.delete_equation(equation)                                   #Elimina la ecuación del modelo
-        self.view.update_terminal(self.model.get_equations())                  #Actualiza la terminal con la ecuación eliminada
-        self.view.update_equation_list(self.model.get_equations())             #Actualiza la lista de ecuaciones en la vista
-        self.view.update_conditions_list(self.model.get_conditions())          #Actualiza la lista de condiciones en la vista
-        self.view.update_initial_conditions_list(self.model.get_initial_conditions())
-        self.view.update_time_range(self.model.get_time_range())               #Actualiza el rango de tiempo en la vista
-        self.view.update_file_name(self.model.get_file_name())                 #Actualiza el nombre del archivo en la vista
-        self.view.update_method(self.model.get_method())                       #Actualiza el método numérico en la vista
-        self.view.update_translator_type(self.model.get_translator_type())     #Actualiza el tipo de traductor en la vista
-
-    def clear_fields(self):
-        self.view.clear_input()                                                 #Limpia el campo de entrada
-        self.view.update_terminal(self.model.get_equations())                   #Actualiza la terminal con la ecuación eliminada
-        self.view.update_equation_list(self.model.get_equations())             #Actualiza la lista de ecuaciones en la vista
-        self.view.update_conditions_list(self.model.get_conditions())          #Actualiza la lista de condiciones en la vista
-        self.view.update_initial_conditions_list(self.model.get_initial_conditions())
-        self.view.update_time_range(self.model.get_time_range())               #Actualiza el rango de tiempo en la vista
-        self.view.update_file_name(self.model.get_file_name())                 #Actualiza el nombre del archivo en la vista
-        self.view.update_method(self.model.get_method())                       #Actualiza el método numérico en la vista
-        self.view.update_translator_type(self.model.get_translator_type())     #Actualiza el tipo de traductor en la vista
-    
-    def generate_simulation(self):
-        self.model.generate_file()                                              #Genera el archivo de salida
-        self.view.update_terminal(self.model.get_equations())                   #Actualiza la terminal con la ecuación generada
-        self.view.update_equation_list(self.model.get_equations())             #Actualiza la lista de ecuaciones en la vista
-        self.view.update_conditions_list(self.model.get_conditions())          #Actualiza la lista de condiciones en la vista
-        self.view.update_initial_conditions_list(self.model.get_initial_conditions())
-        self.view.update_time_range(self.model.get_time_range())               #Actualiza el rango de tiempo en la vista
-        self.view.update_file_name(self.model.get_file_name())                 #Actualiza el nombre del archivo en la vista
-        self.view.update_method(self.model.get_method())                       #Actualiza el método numérico en la vista
-        self.view.update_translator_type(self.model.get_translator_type())     #Actualiza el tipo de traductor en la vista
     
     def get_view(self):
         return self.view                                                        #Devuelve la vista del controlador

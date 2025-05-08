@@ -1,5 +1,4 @@
 from .translator import SimulationModelGenerator
-from ..equation import Equation
 import sympy as sp
 import os
 
@@ -38,6 +37,7 @@ class PythonSimulationGenerator(SimulationModelGenerator):
 
     def write_head_file(self):
         #Añadimos los imports necesarios.
+        self.file.write("# -*- mode: python ; coding: utf-8 -*-\n")
         self.file.write("import numpy as np\n")
         self.file.write("import matplotlib.pyplot as plt\n")
         self.file.write("import sys\n")
@@ -283,7 +283,7 @@ class PythonSimulationGenerator(SimulationModelGenerator):
 
         # Escribimos la comprobación de los argumentos de la línea de comandos.
         self.file.write("\tif len(sys.argv) < " + str(len(self.constants) + len(self.initial_conditions) + 3) + ":\n")
-        self.file.write(f"\t\tprint(f\"Error en el número de parámetros: python {{sys.argv[0]}} {str_symbols} {str_time}\")\n")
+        self.file.write(f"\t\tprint(f\"Error en el numero de parametros: python {{sys.argv[0]}} {str_symbols} {str_time}\")\n")
         self.file.write("\t\tsys.exit(1)\n\n")
 
         # Añadimos la asignación de los argumentos de la línea de comandos a las variables.
@@ -337,7 +337,7 @@ class PythonSimulationGenerator(SimulationModelGenerator):
     def write_results(self):
         # Añadimos la salida de las variables en el archivo.
         self.file.write("\t# Guardamos los resultados en un archivo de texto\n")
-        self.file.write(f"\twith open('{self.name_file}_output_py.csv', 'w') as f:\n")
+        self.file.write(f"\twith open('{self.name_file}_output_python.csv', 'w') as f:\n")
         self.file.write("\t\t# Escribimos la cabecera del archivo\n")
         self.file.write("\t\tf.write('t\t')\n")
         for symbol in self.var_identifiers.keys():

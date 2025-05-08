@@ -1,0 +1,19 @@
+equation:
+- name: x
+  expression: a + x**2*y - x*(b + 1)
+  variable: x y
+  parameters:
+    a: 0.0
+    b: 0.0
+- name: y
+  expression: b*x - x**2*y
+  variable: x y
+  parameters:
+    b: 0.0
+conditions: []
+simulation:
+  time: null
+  output_file: brusselator
+  output_format: csv
+  translator: cpp
+  method: runge-kutta-4

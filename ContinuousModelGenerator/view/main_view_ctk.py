@@ -1,12 +1,15 @@
 import customtkinter as ctk
-import tkinter as tk
 from customtkinter import CTkImage 
 from tkinter import Menu, filedialog
-from PIL import Image
+from PIL import Image , ImageFont
 import os
+import sys
 from .equation_view import GUI_Equation
 from .condition_view import GUI_Condition
 from .simulation_view import GUI_Simulation
+import tkinter as tk
+
+
 
 class GUI_CTK:
     def __init__(self, controller=None):
@@ -17,16 +20,19 @@ class GUI_CTK:
         self.controller = controller
         #ECEDF1
         # Colores de la interfaz
+        self.color_window = "#031240"
         self.color_bg = "#352F6B"
-        self.color_text = "#352F6B"
-        self.color_button_drop = "#058CB1"
-        self.color_dropdown = "#ECEDF1"
-        self.color_aux = "#352F6B"
-
+        self.color_text = "#3B52D9"
+        self.color_button_drop = "#233559"
+        self.color_dropdown = "#F2F2F2"
+        self.color_aux = "#4A6DD9"
+        
+        
+        
         self.window = ctk.CTk()
-        self.window.geometry("468x468")
+        self.window.geometry("500x450")
         self.window.configure(fg_color=self.color_bg)
-        self.window.resizable(False, False)
+        # self.window.resizable(False, False)
         # self.window.overrideredirect(True)
 
         self.load_imgs()
@@ -39,16 +45,25 @@ class GUI_CTK:
     def get_simulation_view(self):
         return self.simulation_view
     
+    def resource_path(self,relative_path):
+        """ Obtiene la ruta del recurso, compatible con PyInstaller """
+        if hasattr(sys, '_MEIPASS'):
+            # Cuando se ejecuta el .exe
+            return os.path.join(sys._MEIPASS, relative_path)
+        return os.path.join(os.path.abspath("."), relative_path)
+
     def load_imgs(self):
-        self.add_img = CTkImage(light_image=Image.open(os.path.join(self.route_img, 'add.png')), size=(20, 20))
-        self.edit_img = CTkImage(light_image=Image.open(os.path.join(self.route_img, 'edit.png')), size=(20, 20))
+        self.add_img = CTkImage(light_image=Image.open(self.resource_path("ContinuousModelGenerator/resources/img/add.png")), size=(20, 20))
+        self.edit_img = CTkImage(light_image=Image.open(self.resource_path("ContinuousModelGenerator/resources/img/edit.png")), size=(20, 20))
+        
 
     def create_widgets(self):
+        self.window_dash()
         self.top_menu()
 
         #Introducimos frame que contenga los elementos 
         self.main_frame = ctk.CTkFrame(self.window, width=400, height= 250, corner_radius=15)
-        self.main_frame.pack(side="top", anchor="nw", padx=10, pady=10)
+        self.main_frame.pack(anchor="center", padx=10, pady=10)
 
         self.create_label(self.main_frame,"Lenguaje", 23, 26)
         options = list(self.controller.get_list_languages())
@@ -64,47 +79,129 @@ class GUI_CTK:
 
         self.widget_equation()
         self.widget_condition()
+        
+        self.bottom_frame = ctk.CTkFrame(self.window, fg_color="transparent")
+        self.bottom_frame.pack(side="bottom", anchor="nw", fill="x", padx=5, pady=5)
 
-        self.button_frame = ctk.CTkFrame(self.window, fg_color="transparent")
-        self.button_frame.pack(side="bottom", anchor="e", pady=10, padx=10)
+        self.button_frame = ctk.CTkFrame(self.bottom_frame, fg_color="transparent")
+        self.button_frame.pack(side="top", anchor="e", fill="x")
 
         self.generate_button = ctk.CTkButton(
-            self.button_frame, text="Generar", command=self.generate_program, width=125, height=50
+            self.button_frame, text="Generar", command=self.generate_program, width=100, height=40
         )
-        self.generate_button.pack(side="left", padx=10,pady=10)
+        self.generate_button.pack(side="left", padx=10 ,pady=10)
 
         self.simulate_button = ctk.CTkButton(
-            self.button_frame, text="Simular", command=self.init_sim_view, width=125, height=50
+            self.button_frame, text="Simular", command=self.init_sim_view, width=100, height=40, 
+            text_color=self.color_aux, fg_color=self.color_button_drop, hover_color="#0A4F7D", state="disabled"
         )
         self.simulate_button.pack(side="left", padx=10 ,pady=10)
+
+        #Añadir panel de errores
+        self.error_frame = ctk.CTkFrame(self.bottom_frame, fg_color="#FFFFFF", corner_radius=18, height=25)
+        self.error_frame.pack(side="bottom", anchor="s", fill="x",pady=0, padx=0)
+
 
     def create_label(self, father, text, x, y):
         label = ctk.CTkLabel(father, text=text, text_color=self.color_text, font=("Roboto", 12, "bold"), anchor="w", justify="left")
         label.place(x=x, y=y)
 
+    def window_dash(self):
+        self.top_bar = ctk.CTkFrame(self.window,width=10, height=200, fg_color=self.color_window, corner_radius=0)
+        self.top_bar.pack(side="top",fill="x")
+        self.top_bar.bind("<Button-1>", self.start_move)
+        self.top_bar.bind("<B1-Motion>", self.do_move)
+
+        # Botón de cerrar
+        self.close_button = ctk.CTkButton(self.top_bar, text="x", width=5, height=5, command=self.window.destroy, corner_radius=5) 
+        self.close_button.pack(side="right", padx=10, pady=5)
+
+        # Botón de minimizar
+        self.minimize_button = ctk.CTkButton(self.top_bar, text="_", width=5, height=5, command=self.window.iconify, corner_radius=5)
+        self.minimize_button.pack(side="right", padx=5, pady=5)
+
+        #Label transparente para aumentar la altura de la barra
+        self.label = ctk.CTkLabel(self.top_bar, text="", width=10, height=10, fg_color="transparent")
+        self.label.pack(side="top", padx=5)
+
+    
     def top_menu(self):
-        menu_bar = Menu(self.window, relief="flat")
+        self.menu_frame = ctk.CTkFrame(self.window, fg_color="transparent", height=60)
+        self.menu_frame.pack(side="top", fill="x")
+        self.init_file_menu()
 
-        menu_archivo = Menu(menu_bar, tearoff=0)
-        menu_archivo.add_command(label="Nuevo")#, command=nuevo_archivo)
-        menu_archivo.add_command(label="Abrir", command=self.open_config_file)
-        menu_archivo.add_command(label="Guardar", command=self.save_config_file)
-        menu_archivo.add_separator()
-        menu_archivo.add_command(label="Salir")#, command=salir)
-        menu_bar.add_cascade(label="Archivo", menu=menu_archivo)
+        # Segmentado menu
+        self.segmented_menu_var = ctk.StringVar(value="📁 Archivo")
+        self.segmented_menu = ctk.CTkSegmentedButton(
+            self.menu_frame,
+            values=["📁 Archivo", "🔍 Ver", "❓ Ayuda"],
+            command=self.handle_segmented_menu,
+            variable=self.segmented_menu_var
+        )
+        self.segmented_menu.pack(side="top",anchor="w", padx=5, pady=5)
 
-        # Menú "Ver"
-        menu_ver = Menu(menu_bar, tearoff=0)
-        menu_ver.add_checkbutton(label="Mostrar líneas de tiempo")
-        menu_bar.add_cascade(label="Ver", menu=menu_ver)
+        function = lambda event: self.handle_segmented_menu(self.segmented_menu_var.get())
+        for child in self.segmented_menu.winfo_children():
+            child.bind("<Button-1>", function)
 
-        # Menú "Ayuda"
-        menu_ayuda = Menu(menu_bar, tearoff=0)
-        menu_ayuda.add_command(label="Ver Ayuda")#, command=mostrar_ayuda)
-        menu_bar.add_cascade(label="Ayuda", menu=menu_ayuda)
+    def handle_segmented_menu(self, value):
+        if value == "📁 Archivo":
+            height = self.file_menu_segmented.winfo_height()
+            if height > 1:
+                self.hide_menu(self.file_menu_segmented, height)
+            else:
+                self.show_menu(self.file_menu_segmented, height)
+        elif value == "🔍 Ver":
+            if hasattr(self, 'file_menu_segmented'):
+                self.file_menu_segmented.destroy()
+                del self.file_menu_segmented
+        elif value == "❓ Ayuda":
+            if hasattr(self, 'file_menu_segmented'):
+                self.file_menu_segmented.destroy()
+                del self.file_menu_segmented
+         
 
-        # Asociar la barra de menú con la ventana
-        self.window.config(menu=menu_bar)
+    def init_file_menu(self):
+
+        self.file_menu_var = ctk.StringVar()
+        self.file_menu_segmented = ctk.CTkSegmentedButton(
+            self.menu_frame,
+            values=["🆕 Nuevo ", "📂 Abrir", "💾 Guardar", "❌ Salir"],
+            command=self.handle_file_menu_action,
+            variable=self.file_menu_var
+        )
+        self.file_menu_segmented.pack(side="bottom",anchor="w",padx=5, pady=5)
+
+        self.hide_menu(self.file_menu_segmented, self.file_menu_segmented.winfo_height())
+
+    def handle_file_menu_action(self, action):
+        if action == "🆕 Nuevo":
+            self.controller.new_file()
+        elif action == "📂 Abrir":
+            self.open_config_file()
+        elif action == "💾 Guardar":
+            self.save_config_file()
+        elif action == "❌ Salir":
+            self.window.destroy()
+
+    def show_view_menu(self):
+        self.view_menu_frame = ctk.CTkFrame(self.window, fg_color=self.color_dropdown, corner_radius=10)
+        self.view_menu_frame.place(x=90, y=35)
+
+        self.timeline_var = ctk.BooleanVar()
+        ctk.CTkCheckBox(
+            self.view_menu_frame, text="Mostrar líneas de tiempo", variable=self.timeline_var,
+            fg_color="transparent", text_color=self.color_aux
+        ).pack(anchor="w", padx=5, pady=2)
+
+    def show_help_menu(self):
+        self.help_menu_frame = ctk.CTkFrame(self.window, fg_color=self.color_dropdown, corner_radius=10)
+        self.help_menu_frame.place(x=175, y=35)
+
+        ctk.CTkButton(
+            self.help_menu_frame, text="Ver Ayuda", width=100, height=30, fg_color="transparent",
+            text_color=self.color_aux, hover_color="#D3D3D3"
+        ).pack(anchor="w", padx=5, pady=2)
 
 
     def widget_equation(self):
@@ -204,6 +301,37 @@ class GUI_CTK:
             ruta, nombre = os.path.split(ruta_completa)
             self.controller.generate(ruta, nombre)
 
+    def start_move(self, event):
+        self.offset_x = event.x
+        self.offset_y = event.y
+    
+    def do_move(self, event):
+        x = self.window.winfo_pointerx() - self.offset_x
+        y = self.window.winfo_pointery() - self.offset_y
+        self.window.geometry(f"+{x}+{y}")
+
+    def show_menu(self, menu, longitude):
+        """Animar la aparición del menú deslizante."""
+        current_width = longitude
+
+        if current_width < self.menu_width:
+            new_width = current_width + 20
+            self.menu_frame.configure(width=new_width)
+            self.after(10, self.show_menu)
+        else:
+            self.menu_open = True
+
+    def hide_menu(self,menu, longitude):
+        """Animar la desaparición del menú deslizante."""
+        current_width = longitude
+        
+        if current_width > 1:
+            new_width = current_width - 20
+            self.menu_frame.configure(width=new_width)
+            self.after(10, self.hide_menu)
+        else:
+            print("Menu closed")
+            self.menu_open = False
 
     def run(self):
         self.window.mainloop()

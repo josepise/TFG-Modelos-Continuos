@@ -2,7 +2,6 @@ from tkinter import Button, Tk, Canvas, Menu , filedialog
 from tkinter import StringVar, OptionMenu, PhotoImage
 from .equation_view import GUI_Equation
 from .condition_view import GUI_Condition
-import sympy as sp
 import os
 
 class GUI:

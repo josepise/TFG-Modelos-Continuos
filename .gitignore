@@ -2,3 +2,5 @@ ContinuousModelGenerator/__pycache__
 models/
 ContinuousModelGenerator/translators/__pycache__
 *.csv
+build/
+dist/

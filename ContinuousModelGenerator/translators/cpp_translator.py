@@ -1,5 +1,4 @@
 from .translator import SimulationModelGenerator
-from ..equation import Equation
 import sympy as sp
 import re
 import os

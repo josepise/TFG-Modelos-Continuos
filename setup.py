@@ -1,4 +1,6 @@
 from setuptools import setup, find_packages
+import os
+import subprocess
 
 with open("requirements.txt") as f:
     install_requires = f.read().splitlines()
