@@ -59,12 +59,20 @@ class GUI_CTK:
 
     def create_widgets(self):
         self.window_dash()
+    
+        #Añadir panel de errores
+        self.error_frame = ctk.CTkFrame(self.window, fg_color="#FFFFFF", corner_radius=18, height=25)
+        self.error_frame.pack(side="bottom", anchor="s", fill="x",pady=0, padx=0)
+
         self.top_menu()
 
-        #Introducimos frame que contenga los elementos 
+        self.aux_frame = ctk.CTkFrame(self.window,fg_color=("white10", "white80"), corner_radius=15, width=400, height= 250)
+        self.aux_frame.pack(side="right", anchor="e",fill="y", padx=10, pady=10)
+
+        
         self.main_frame = ctk.CTkFrame(self.window, width=400, height= 250, corner_radius=15)
         self.main_frame.pack(anchor="center", padx=10, pady=10)
-
+       
         self.create_label(self.main_frame,"Lenguaje", 23, 26)
         options = list(self.controller.get_list_languages())
         self.update_dropdown_lang(options)
@@ -97,10 +105,7 @@ class GUI_CTK:
         )
         self.simulate_button.pack(side="left", padx=10 ,pady=10)
 
-        #Añadir panel de errores
-        self.error_frame = ctk.CTkFrame(self.bottom_frame, fg_color="#FFFFFF", corner_radius=18, height=25)
-        self.error_frame.pack(side="bottom", anchor="s", fill="x",pady=0, padx=0)
-
+        
 
     def create_label(self, father, text, x, y):
         label = ctk.CTkLabel(father, text=text, text_color=self.color_text, font=("Roboto", 12, "bold"), anchor="w", justify="left")
@@ -138,27 +143,28 @@ class GUI_CTK:
             command=self.handle_segmented_menu,
             variable=self.segmented_menu_var
         )
-        self.segmented_menu.pack(side="top",anchor="w", padx=5, pady=5)
+        self.segmented_menu.pack(side="left",anchor="w", padx=5, pady=5)
 
-        function = lambda event: self.handle_segmented_menu(self.segmented_menu_var.get())
-        for child in self.segmented_menu.winfo_children():
-            child.bind("<Button-1>", function)
+        # function = lambda event: self.handle_segmented_menu(self.segmented_menu_var.get())
+        # for child in self.segmented_menu.winfo_children():
+        #     child.bind("<Button-1>", function)
 
     def handle_segmented_menu(self, value):
         if value == "📁 Archivo":
-            height = self.file_menu_segmented.winfo_height()
-            if height > 1:
-                self.hide_menu(self.file_menu_segmented, height)
-            else:
-                self.show_menu(self.file_menu_segmented, height)
-        elif value == "🔍 Ver":
-            if hasattr(self, 'file_menu_segmented'):
-                self.file_menu_segmented.destroy()
-                del self.file_menu_segmented
-        elif value == "❓ Ayuda":
-            if hasattr(self, 'file_menu_segmented'):
-                self.file_menu_segmented.destroy()
-                del self.file_menu_segmented
+            pass
+            # height = self.file_menu_segmented.winfo_height()
+            # if height > 1:
+            #     self.hide_menu(self.file_menu_segmented, height)
+            # else:
+            #     self.show_menu(self.file_menu_segmented, height)
+        # elif value == "🔍 Ver":
+        #     if hasattr(self, 'file_menu_segmented'):
+        #         self.file_menu_segmented.destroy()
+        #         del self.file_menu_segmented
+        # elif value == "❓ Ayuda":
+        #     if hasattr(self, 'file_menu_segmented'):
+        #         self.file_menu_segmented.destroy()
+        #         del self.file_menu_segmented
          
 
     def init_file_menu(self):
@@ -170,7 +176,7 @@ class GUI_CTK:
             command=self.handle_file_menu_action,
             variable=self.file_menu_var
         )
-        self.file_menu_segmented.pack(side="bottom",anchor="w",padx=5, pady=5)
+        self.file_menu_segmented.pack(side="right",anchor="center",padx=5, pady=5)
 
         self.hide_menu(self.file_menu_segmented, self.file_menu_segmented.winfo_height())
 
@@ -312,25 +318,22 @@ class GUI_CTK:
 
     def show_menu(self, menu, longitude):
         """Animar la aparición del menú deslizante."""
-        current_width = longitude
-
-        if current_width < self.menu_width:
-            new_width = current_width + 20
-            self.menu_frame.configure(width=new_width)
-            self.after(10, self.show_menu)
+        if longitude < self.menu_width:
+            new_width = longitude + 20
+            menu.configure(width=new_width)
+            self.window.after(10, self.show_menu,menu,new_width)
         else:
+            print("Menu opened")
             self.menu_open = True
 
-    def hide_menu(self,menu, longitude):
+    def hide_menu(self, frame, longitude):
         """Animar la desaparición del menú deslizante."""
-        current_width = longitude
-        
-        if current_width > 1:
-            new_width = current_width - 20
-            self.menu_frame.configure(width=new_width)
-            self.after(10, self.hide_menu)
+    
+        if longitude > 1:
+            new_width = longitude - 20
+            frame.configure(height=new_width)
+            self.window.after(10, self.hide_menu, frame, new_width)
         else:
-            print("Menu closed")
             self.menu_open = False
 
     def run(self):
