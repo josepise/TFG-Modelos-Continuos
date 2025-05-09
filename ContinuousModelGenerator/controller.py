@@ -156,8 +156,6 @@ class GeneratorController:
 
         self.model.edit_condition(text_exp,text_act,text_var,constants, index)
 
-  
-    
     def set_language(self, language):
         self.model.set_translator_type(language)                    #Establece el lenguaje del modelo
         self.view.update_dropdown_output(self.get_list_output())      #Actualiza la lista de salidas en la vista
@@ -277,10 +275,12 @@ class GeneratorController:
         view_simulation.update_result_terminal(data)
         view_simulation.update_result_plot(data)     
 
-                               
+    def toggle_frame(self):
+        self.view.toggle_frame()  
         
     def load_config(self, file_path:str):
         self.model=SimulationModel.load_config(file_path)                                          #Carga el archivo de configuración
+        
         self.view.update_dropdown_condition(self.get_list_conditions())            #Actualiza la lista de condiciones en la vista
         self.view.update_dropdown_equation(self.get_list_equations())            #Actualiza la lista de ecuaciones en la vista
         self.view.update_dropdown_lang(self.get_list_languages(),self.model.get_translator_type())            #Actualiza la lista de lenguajes en la vista

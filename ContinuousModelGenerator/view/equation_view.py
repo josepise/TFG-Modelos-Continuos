@@ -176,3 +176,4 @@ class GUI_Equation(Toplevel):
 
         # Redibujar
         self.latex_canvas.draw()
+
