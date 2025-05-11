@@ -7,7 +7,7 @@ from .conditions import Condition
 from .model import ContinuousModelGenerator
 from .view.main_view import GUI
 from .view.main_view_ctk import GUI_CTK
-from .view.equation_view_ckt import GUI_Equation
+from .view.equation_view_ctk import GUI_Equation
 from .view.condition_view import GUI_Condition
 from .view.simulation_view import GUI_Simulation
 from .controller import GeneratorController

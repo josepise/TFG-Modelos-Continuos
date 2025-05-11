@@ -235,6 +235,15 @@ class ContinuousModelGenerator:
         eq = Equation(var_eq,text_equation, text_var, constant)
         self.equations[index] = eq
 
+    def delete_equation(self, index):
+        """
+        Elimina una ecuación de la lista de ecuaciones.
+        """
+        if index < 0 or index >= len(self.equations):
+            raise IndexError("Índice fuera de rango.")
+        
+        del self.equations[index]
+
     def add_condition(self, text_exp ,  text_action, text_var,text_constant):
         cond = Condition(text_exp, text_action, text_var, text_constant)
         self.conditions.append(cond)
@@ -248,6 +257,15 @@ class ContinuousModelGenerator:
         
         cond = Condition(text_exp, text_action, text_var, text_constant)
         self.conditions[index] = cond
+
+    def delete_condition(self, index):
+        """
+        Elimina una condición de la lista de condiciones.
+        """
+        if index < 0 or index >= len(self.conditions):
+            raise IndexError("Índice fuera de rango.")
+        
+        del self.conditions[index]
         
     def check_components(self):
         """

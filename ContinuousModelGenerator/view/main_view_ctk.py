@@ -4,14 +4,12 @@ from tkinter import Menu, filedialog
 from PIL import Image , ImageFont
 import os
 import sys
-from .equation_view_ckt import GUI_Equation
-from .condition_view import GUI_Condition
+from .equation_view_ctk import GUI_Equation
+from .condition_view_ctk import GUI_Condition
 from .simulation_view import GUI_Simulation
 import tkinter as tk
 
 
-#0,48671875
-#0,52375
 class GUI_CTK:
     def __init__(self, controller=None):
         ctk.set_appearance_mode("light")
@@ -59,8 +57,9 @@ class GUI_CTK:
         return os.path.join(os.path.abspath("."), relative_path)
 
     def load_imgs(self):
-        self.add_img = CTkImage(light_image=Image.open(self.resource_path("ContinuousModelGenerator/resources/img/add.png")), size=(20, 20))
-        self.edit_img = CTkImage(light_image=Image.open(self.resource_path("ContinuousModelGenerator/resources/img/edit.png")), size=(20, 20))
+        self.add_img = CTkImage(light_image=Image.open(self.resource_path("ContinuousModelGenerator/resources/img/add_1.png")), size=(20, 20))
+        self.edit_img = CTkImage(light_image=Image.open(self.resource_path("ContinuousModelGenerator/resources/img/edit_1.png")), size=(20, 20))
+        self.delete_img = CTkImage(light_image=Image.open(self.resource_path("ContinuousModelGenerator/resources/img/delete_1.png")), size=(20, 20))
         
 
     def create_widgets(self):
@@ -89,13 +88,13 @@ class GUI_CTK:
 
         self.simulate_button = ctk.CTkButton(
             self.button_frame, text="Simular", command=self.init_sim_view, width=100, height=40, 
-            text_color=self.color_aux, fg_color=self.color_button_drop, hover_color="#0A4F7D", state="disabled"
+            text_color=self.color_aux, hover_color="#0A4F7D",fg_color="#555555",state="disabled"
         )
         self.simulate_button.pack(side="left", padx=10 ,pady=10)
 
     def create_main_frame(self):
         self.main_frame = ctk.CTkFrame(self.window, corner_radius=15)
-        self.main_frame.pack(anchor="center", fill="x", padx=15, pady=15, expand=True)
+        self.main_frame.pack(anchor="center", fill="both", padx=15, pady=15, expand=True)
        
         self.language_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent", width=400, height= 250)
         self.create_label(self.language_frame,"Lenguaje","left")
@@ -150,58 +149,28 @@ class GUI_CTK:
     def top_menu(self):
         self.menu_frame = ctk.CTkFrame(self.window, fg_color="transparent", height=60)
         self.menu_frame.pack(side="top", fill="x")
-        self.init_file_menu()
 
         # Segmentado menu
-        self.segmented_menu_var = ctk.StringVar(value="📁 Archivo")
-        self.segmented_menu = ctk.CTkSegmentedButton(
-            self.menu_frame,
-            values=["📁 Archivo", "🔍 Ver", "❓ Ayuda"],
-            command=self.handle_segmented_menu,
-            variable=self.segmented_menu_var
-        )
-        self.segmented_menu.pack(side="left",anchor="w", padx=5, pady=5)
-
-        # function = lambda event: self.handle_segmented_menu(self.segmented_menu_var.get())
-        # for child in self.segmented_menu.winfo_children():
-        #     child.bind("<Button-1>", function)
-
-    def handle_segmented_menu(self, value):
-        if value == "📁 Archivo":
-            pass
-            # height = self.file_menu_segmented.winfo_height()
-            # if height > 1:
-            #     self.hide_menu(self.file_menu_segmented, height)
-            # else:
-            #     self.show_menu(self.file_menu_segmented, height)
-        # elif value == "🔍 Ver":
-        #     if hasattr(self, 'file_menu_segmented'):
-        #         self.file_menu_segmented.destroy()
-        #         del self.file_menu_segmented
-        # elif value == "❓ Ayuda":
-        #     if hasattr(self, 'file_menu_segmented'):
-        #         self.file_menu_segmented.destroy()
-        #         del self.file_menu_segmented
-         
-
-    def init_file_menu(self):
-
         self.file_menu_var = ctk.StringVar()
         self.file_menu_segmented = ctk.CTkSegmentedButton(
             self.menu_frame,
-            values=["🆕 Nuevo ", "📂 Abrir", "💾 Guardar", "❌ Salir"],
+            values=["🆕 Nuevo", "📂 Abrir", "💾 Guardar", "❌ Salir"],
             command=self.handle_file_menu_action,
             variable=self.file_menu_var
         )
-        self.file_menu_segmented.pack(side="right",anchor="center",padx=5, pady=5)
+        self.file_menu_segmented.pack(side="left",anchor="center",padx=5, pady=5)
+
 
     def handle_file_menu_action(self, action):
         if action == "🆕 Nuevo":
             self.controller.new_file()
+            self.file_menu_segmented.configure(variable=ctk.StringVar())
         elif action == "📂 Abrir":
             self.open_config_file()
+            self.file_menu_segmented.configure(variable=ctk.StringVar())
         elif action == "💾 Guardar":
             self.save_config_file()
+            self.file_menu_segmented.configure(variable=ctk.StringVar())
         elif action == "❌ Salir":
             self.window.destroy()
 
@@ -228,40 +197,74 @@ class GUI_CTK:
     def widget_equation(self):
         self.create_label(self.equation_frame,"Ecuaciones","left")
        
+        self.delete_equation_button = ctk.CTkButton(
+            self.equation_frame, 
+            text="", 
+            image=self.delete_img, 
+            command=lambda: self.controller.delete_equation(self.dropdown_eq.get()),   
+            width=20, height=20, 
+            fg_color="transparent"
+        )
+        self.delete_equation_button.pack(side="right", anchor="w", padx=0.5, pady=5)
+
         self.edit_equation_button = ctk.CTkButton(
             self.equation_frame, 
             text="", 
             image=self.edit_img, 
-            command=lambda: self.toggle_frame("edit", self.dropdown_eq.get()),   
+            command=lambda: self.controller.toggle_frame("eq","edit", self.dropdown_eq.get()),   
             width=20, height=20, 
             fg_color="transparent"
         )
-        self.edit_equation_button.pack(side="right", anchor="w", padx=5, pady=5)
+        self.edit_equation_button.pack(side="right", anchor="w", padx=0.5, pady=5)
 
         self.add_equation_button = ctk.CTkButton(
             self.equation_frame, 
             text="", 
             image=self.add_img, 
-            command=lambda: self.toggle_frame("add"), 
+            command=lambda: self.controller.toggle_frame("eq","add"), 
             width=20, height=20, 
             fg_color="transparent"
         )
-        self.add_equation_button.pack(side="right", anchor="w", padx=5, pady=5)
+        self.add_equation_button.pack(side="right", anchor="w", padx=0.5, pady=5)
 
         self.update_dropdown_equation(self.controller.get_list_equations())
 
     def widget_condition(self):
         self.create_label(self.condition_frame,"Condiciones","left")
         
-        self.edit_condition_button = ctk.CTkButton(
-            self.condition_frame, text="", image=self.edit_img, command=self.modify_condition, width=20, height=20, fg_color="transparent"
+        self.delete_condition_button = ctk.CTkButton(
+            self.condition_frame, 
+            text="",
+            image=self.delete_img, 
+            command=lambda: self.controller.delete_condition(self.dropdown_cond.get()),
+            width=20, 
+            height=20, 
+            fg_color="transparent"
         )
-        self.edit_condition_button.pack(side="right", anchor="w", padx=5, pady=5)
+        self.delete_condition_button.pack(side="right", anchor="w", padx=0.5, pady=5)
+
+
+        self.edit_condition_button = ctk.CTkButton(
+            self.condition_frame, 
+            text="", 
+            image=self.edit_img, 
+            command=lambda: self.controller.toggle_frame("cond","edit", self.dropdown_cond.get()),
+            width=20, 
+            height=20, 
+            fg_color="transparent"
+        )
+        self.edit_condition_button.pack(side="right", anchor="w", padx=0.5, pady=5)
 
         self.add_condition_button = ctk.CTkButton(
-            self.condition_frame, text="", image=self.add_img, command=lambda: GUI_Condition(self.window, self.controller, "add"), width=20, height=20, fg_color="transparent"
+            self.condition_frame,
+            text="", 
+            image=self.add_img, 
+            command=lambda: self.controller.toggle_frame("cond","add"),
+            width=20, 
+            height=20, 
+            fg_color="transparent"
         )
-        self.add_condition_button.pack(side="right", anchor="w", padx=5, pady=5)
+        self.add_condition_button.pack(side="right", anchor="w", padx=0.5, pady=5)
 
         self.update_dropdown_condition(self.controller.get_list_conditions())
        
@@ -279,6 +282,9 @@ class GUI_CTK:
             self.dropdown_cond.configure(values=options)
 
             if not self.dropdown_cond.winfo_ismapped():
+                self.delete_condition_button.pack(side="right", anchor="w", padx=5, pady=5)
+                self.edit_condition_button.pack(side="right", anchor="w", padx=5, pady=5)
+                self.add_condition_button.pack(side="right", anchor="w", padx=5, pady=5)
                 self.dropdown_cond.pack(side="right", anchor="w", padx=5, pady=5)
 
     def update_dropdown_equation(self, options):
@@ -296,7 +302,10 @@ class GUI_CTK:
         else:
             self.dropdown_eq.configure(values=options)
             
-            if not self.dropdown_eq.winfo_ismapped():
+            if not self.dropdown_eq.winfo_ismapped():  
+                self.delete_equation_button.pack(side="right", anchor="w", padx=5, pady=5)
+                self.edit_equation_button.pack(side="right", anchor="w", padx=5, pady=5)
+                self.add_equation_button.pack(side="right", anchor="w", padx=5, pady=5)
                 self.dropdown_eq.pack(side="right", anchor="w", padx=5, pady=5)
             
     def update_dropdown_lang(self, options, selected_option=None):
@@ -311,6 +320,10 @@ class GUI_CTK:
 
         else:
             self.dropdown_lang.configure(values=options)
+            
+            if not self.dropdown_lang.winfo_ismapped():
+                self.dropdown_lang.pack(side="right", anchor="w", padx=5, pady=5)
+
             if selected_option:
                 self.dropdown_lang.set(selected_option)
             else:
@@ -327,6 +340,10 @@ class GUI_CTK:
             self.dropdown_output.pack(side="right", anchor="w", padx=5, pady=5)
         else:
             self.dropdown_output.configure(values=options)
+            
+            if not self.dropdown_output.winfo_ismapped():
+                self.dropdown_output.pack(side="right", anchor="w", padx=5, pady=5)
+
             if selected_option:
                 self.dropdown_output.set(selected_option)
             else:
@@ -343,20 +360,15 @@ class GUI_CTK:
             self.dropdown_method.pack(side="right", anchor="w", padx=5, pady=5)
         else:
             self.dropdown_method.configure(values=options)
+
+            if not self.dropdown_method.winfo_ismapped():
+                self.dropdown_method.pack(side="right", anchor="w", padx=5, pady=5)
+            
             if selected_option:
                 self.dropdown_method.set(selected_option)
             else:
                 self.dropdown_method.set("Seleccionar")
 
-    def modify_equation(self):
-        selected = self.dropdown_eq.get()
-        if selected != "Seleccionar":
-            GUI_Equation(self.main_frame, self.controller, "edit", selected)
-
-    def modify_condition(self):
-        selected = self.dropdown_cond.get()
-        if selected != "Seleccionar":
-            GUI_Condition(self.main_frame, self.controller, "edit", selected)
 
     def open_config_file(self):
         ruta = filedialog.askopenfilename(filetypes=[("YAML files", "*.yaml")], title="Selecciona un archivo")
@@ -383,47 +395,17 @@ class GUI_CTK:
         y = self.window.winfo_pointery() - self.offset_y
         self.window.geometry(f"+{x}+{y}")
 
-    def toggle_frame(self, option=None, selected=None):
-        
-        if self.frame_open:
-            print("Cerrando frame")
-            self.hide_frame(self.aux_frame.winfo_width())
-            self.update_dropdown_condition(self.controller.get_list_conditions())
-            self.update_dropdown_equation(self.controller.get_list_equations())
-            self.update_dropdown_lang(self.controller.get_list_languages())
-            self.update_dropdown_output(self.controller.get_list_output())
-            self.update_dropdown_method(self.controller.get_list_methods())
-            
-            if hasattr(self, 'eq_frm'):
-                self.eq_frm.delete()
-                del self.eq_frm
-
-        else:
-            print("Abriendo frame")
-            self.show_frame(self.aux_frame.winfo_width())
-            self.dropdown_cond.pack_forget()
-            self.dropdown_eq.pack_forget()
-            self.dropdown_lang.pack_forget()
-            self.dropdown_output.pack_forget()
-            self.dropdown_method.pack_forget()
-            self.add_condition_button.pack_forget()
-            self.edit_condition_button.pack_forget()
-            self.add_equation_button.pack_forget()
-            self.edit_equation_button.pack_forget()
-            self.eq_frm=GUI_Equation(self.aux_frame, self.controller, option, selected)
-            
-            
-
-    def show_frame(self,width):
+   
+    def show_frame(self, width, function,option, selected=None):
         """Animar la aparición del frame."""
         
         if width < self.aux_frame_max_width:
             new_width = width + 20
             self.aux_frame.configure(width=new_width)
-            # self.window.update_idletasks()
-            self.window.after(10, self.show_frame, new_width)
+            self.window.after(10, self.show_frame, new_width, function,option, selected)
         else:
             self.frame_open = True
+            self.eq_frm=function(self.aux_frame, self.controller, option, selected)
 
     def hide_frame(self,width):
         """Animar la desaparición del frame."""
@@ -434,8 +416,7 @@ class GUI_CTK:
         if width > 1:
             new_width = width - 20
             self.aux_frame.configure(width=new_width)
-            # self.window.update_idletasks()
-            self.window.after(10, self.hide_frame,new_width)
+            self.window.after(10, self.hide_frame,new_width)    
         else:
             self.frame_open = False
 

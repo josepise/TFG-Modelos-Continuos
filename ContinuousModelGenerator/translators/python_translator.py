@@ -362,5 +362,5 @@ class PythonSimulationGenerator(SimulationModelGenerator):
     def run(self, args=None):
     
         # Run the Python script with the required arguments
-        os.system(f"python3 {self.path_file}/{self.name_file}.py \
+        os.system(f"python {self.path_file}/{self.name_file}.py \
                  {args} ")
