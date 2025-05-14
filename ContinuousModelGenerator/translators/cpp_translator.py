@@ -11,9 +11,7 @@ class CppSimulationGenerator(SimulationModelGenerator):
         self.pattern_pow = r'([a-zA-Z_][a-zA-Z_0-9]*(?:\[[^\]]+\])?|\(.+?\))\s*\*\*\s*(\d+(?:\.\d+)?)'
 
     def generate_file(self):
-        # Create the C++ simulation file in the folder ./models/
-        os.makedirs("./models/", exist_ok=True)
-        self.file = open(f"./models/{self.name_file}.cpp", "w")
+        self.file = open(f"{self.path_file}/{self.name_file}.cpp", "w")
 
         self.set_var_identifiers()
         self.set_constants()
@@ -25,12 +23,15 @@ class CppSimulationGenerator(SimulationModelGenerator):
         self.write_equations()
 
         # Add the integration method
-        if self.numerical_method == "euler":
-            self.write_euler_method()
-        elif self.numerical_method == "runge-kutta-4":
-            self.write_runge_kutta_4_method()
-        elif self.numerical_method == "runge-kutta-fehlberg":
-            self.write_runge_kutta_fehlberg_method()
+        match self.numerical_method:
+            case "euler":
+                self.write_euler_method()
+            case "euler-improved":
+                self.write_euler_method_improved()
+            case "runge-kutta-4":
+                self.write_runge_kutta_4_method()
+            case "runge-kutta-fehlberg":
+                self.write_runge_kutta_fehlberg_method()
 
         self.write_main()
 
@@ -121,7 +122,6 @@ class CppSimulationGenerator(SimulationModelGenerator):
     def write_equations(self):
         # Write the function header
         self.file.write("vector<double> deriv(const vector<double>& inp) {\n")
-        self.file.write("    vector<double> out(n_equations);\n")
 
         self.write_conditionals()
 
@@ -134,11 +134,12 @@ class CppSimulationGenerator(SimulationModelGenerator):
 
             eq= self.prepare_equations(equation, subs_dict)
     
-            self.file.write(f"    out[{i}] = {eq};\n")
+            self.file.write(f"    double {equation.get_name()} = {eq};\n")
            
+        cadena = self.get_return_values()
 
-        self.file.write("    return out;\n")
-        self.file.write("}\n\n")
+        self.file.write("\treturn {"+f"{cadena}"+"};\n}")
+        self.file.write("\n\n")
 
     def write_euler_method(self):
         # Write the Euler method
@@ -150,6 +151,28 @@ class CppSimulationGenerator(SimulationModelGenerator):
         self.file.write("    vector<double> out = deriv(inp);\n")
         self.file.write("    for (int i = 0; i < n_equations; ++i) {\n")
         self.file.write("        est[i].push_back(inp[i] + hh * out[i]);\n")
+        self.file.write("    }\n")
+        self.file.write("}\n\n")
+
+    def write_euler_method_improved(self):  
+        # Write the Improved Euler (Heun's) method in C++
+        self.file.write("void one_step_euler_improved(double hh, int step) {\n")
+        self.file.write("    vector<double> inp(n_equations);\n")
+        self.file.write("    vector<double> out(n_equations);\n")
+        self.file.write("    vector<vector<double>> k(n_equations, vector<double>(2));\n")
+        self.file.write("    for (int i = 0; i < n_equations; ++i) {\n")
+        self.file.write("        inp[i] = est[i][step - 1];\n")
+        self.file.write("        out[i] = est[i][step - 1];\n")
+        self.file.write("    }\n")
+        self.file.write("    for (int j = 0; j < 2; ++j) {\n")
+        self.file.write("        vector<double> deriv_out = deriv(out);\n")
+        self.file.write("        for (int i = 0; i < n_equations; ++i) {\n")
+        self.file.write("            k[i][j] = deriv_out[i];\n")
+        self.file.write("            out[i] = inp[i] + k[i][j] * hh;\n")
+        self.file.write("        }\n")
+        self.file.write("    }\n")
+        self.file.write("    for (int i = 0; i < n_equations; ++i) {\n")
+        self.file.write("        est[i].push_back(inp[i] + hh * (k[i][0] + k[i][1]) / 2.0);\n")
         self.file.write("    }\n")
         self.file.write("}\n\n")
 
@@ -271,6 +294,11 @@ class CppSimulationGenerator(SimulationModelGenerator):
             self.file.write("    for (int i = 1; i <= steps; ++i) {\n")
             self.file.write("        one_step_euler(dt, i);\n")
             self.file.write("    }\n")
+        elif self.numerical_method == "euler-improved":
+            self.file.write("    int steps = static_cast<int>((tf - t0) / dt);\n")
+            self.file.write("    for (int i = 1; i <= steps; ++i) {\n")
+            self.file.write("        one_step_euler_improved(dt, i);\n")
+            self.file.write("    }\n")
         elif self.numerical_method == "runge-kutta-4":
             self.file.write("    int steps = static_cast<int>((tf - t0) / dt);\n")
             self.file.write("    for (int i = 1; i <= steps; ++i) {\n")
@@ -334,8 +362,14 @@ class CppSimulationGenerator(SimulationModelGenerator):
         self.file.write("}\n\n")
     
     def compile(self):
-        os.system(f"g++ -o {self.path_file}/{self.name_file} {self.path_file}/{self.name_file}.cpp -std=c++11 -lm")
+        os.system(f"g++ -o {self.path_file}/{self.name_file} {self.path_file}/{self.name_file}.cpp -std=c++11 -static-libgcc -static-libstdc++")
 
     def run(self, args):
-        os.system(f"{self.path_file}/{self.name_file} \
-                    {args}")
+
+        #Comprobamos si es windows o linux para ejecutar el comando
+        if os.name == 'nt':
+            os.system(f"{self.path_file}/{self.name_file}.exe {args}")
+            print(f"Ejecutando el programa: {self.path_file}\\{self.name_file}.exe {args}")
+        elif os.name == 'posix':
+            os.system(f"{self.path_file}/{self.name_file} {args}")
+

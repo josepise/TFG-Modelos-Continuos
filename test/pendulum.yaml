@@ -1,0 +1,18 @@
+equation:
+- name: y_1
+  expression: y_2
+  variable: y_2
+  parameters: {}
+- name: y_2
+  expression: -g*sin(y_1)/l
+  variable: y_1
+  parameters:
+    g: 0.0
+    l: 0.0
+conditions: []
+simulation:
+  time: null
+  output_file: null
+  output_format: csv
+  translator: java
+  method: runge-kutta-4

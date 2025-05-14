@@ -1,11 +1,9 @@
 import customtkinter as ctk
 from customtkinter import CTkImage 
-from tkinter import Menu, filedialog
-from PIL import Image , ImageFont
+from tkinter import filedialog
+from PIL import Image
 import os
 import sys
-from .equation_view_ctk import GUI_Equation
-from .condition_view_ctk import GUI_Condition
 from .simulation_view import GUI_Simulation
 import tkinter as tk
 
@@ -29,8 +27,8 @@ class GUI_CTK:
         #Obtenemos la resolución de la pantalla
         root = tk.Tk()
         root.withdraw()  # Ocultar la ventana raíz temporal
-        self.screen_width =int(root.winfo_screenwidth()* 0.48671875)
-        self.screen_height =int(root.winfo_screenheight()* 0.52375)
+        self.screen_width =int(root.winfo_screenwidth()* 0.50)
+        self.screen_height =int(root.winfo_screenheight()* 0.60)
         root.destroy()  # Destruir la ventana raíz después de obtener la resolución
 
         self.window = ctk.CTk()
@@ -40,10 +38,13 @@ class GUI_CTK:
         # self.window.overrideredirect(True)
 
         self.load_imgs()
+        self.window.iconbitmap(self.resource_path("ContinuousModelGenerator/resources/img/icon.ico"))
         self.create_widgets()
 
     def init_sim_view(self):
-        self.simulation_view = GUI_Simulation(self.window, self.controller)
+        
+        if self.controller.compile():
+            self.simulation_view = GUI_Simulation(self.window, self.controller)
 
 
     def get_simulation_view(self):
@@ -60,24 +61,28 @@ class GUI_CTK:
         self.add_img = CTkImage(light_image=Image.open(self.resource_path("ContinuousModelGenerator/resources/img/add_1.png")), size=(20, 20))
         self.edit_img = CTkImage(light_image=Image.open(self.resource_path("ContinuousModelGenerator/resources/img/edit_1.png")), size=(20, 20))
         self.delete_img = CTkImage(light_image=Image.open(self.resource_path("ContinuousModelGenerator/resources/img/delete_1.png")), size=(20, 20))
+        self.icon = CTkImage(light_image=Image.open(self.resource_path("ContinuousModelGenerator/resources/img/icon.ico")), size=(20, 20))
         
 
     def create_widgets(self):
         # self.window_dash()
     
         #Añadir panel de errores
-        self.error_frame = ctk.CTkFrame(self.window, fg_color="#FFFFFF", corner_radius=18, height=25)
-        self.error_frame.pack(side="bottom", anchor="s", fill="x",pady=15, padx=15)
+        self.log_frame = ctk.CTkFrame(self.window, fg_color="#FFFFFF", corner_radius=18, height=25)
+        self.log_frame.pack(side="bottom", anchor="s", fill="x",pady=15, padx=15)
+        self.log_label = ctk.CTkLabel(self.log_frame, text="", text_color="red", anchor="w", justify="left")
+        self.log_label.pack(side="left", anchor="w", padx=5, pady=5)
+        self.controller.set_log_label(self.log_label)
 
         self.top_menu()
 
-        self.aux_frame_max_width = 400
+        self.aux_frame_max_width = 800
         self.frame_open = False
-        self.aux_frame = ctk.CTkFrame(self.window, corner_radius=15, width=0, height= 250)
-        self.aux_frame.pack(side="right", anchor="e", fill="y",padx=10, pady=10)
+        self.aux_frame = ctk.CTkFrame(self.window, corner_radius=15, width=0)
+        
 
         self.create_main_frame()
-        self.button_frame = ctk.CTkFrame(self.window, fg_color="transparent")
+        self.button_frame = ctk.CTkFrame(self.window, fg_color="transparent", corner_radius=0, height=50)
         self.button_frame.pack(side="bottom", anchor="center", fill="x")
 
         self.generate_button = ctk.CTkButton(
@@ -381,10 +386,13 @@ class GUI_CTK:
             self.controller.save_config(ruta)
 
     def generate_program(self):
-        ruta_completa = filedialog.asksaveasfilename(title="Generar programa")
-        if ruta_completa:
-            ruta, nombre = os.path.split(ruta_completa)
-            self.controller.generate(ruta, nombre)
+        success = self.controller.check_generator()
+
+        if success:
+            ruta_completa = filedialog.asksaveasfilename(title="Generar programa")
+            if ruta_completa:
+                ruta, nombre = os.path.split(ruta_completa)
+                self.controller.generate(ruta, nombre)
 
     def start_move(self, event):
         self.offset_x = event.x
@@ -416,7 +424,7 @@ class GUI_CTK:
         if width > 1:
             new_width = width - 20
             self.aux_frame.configure(width=new_width)
-            self.window.after(10, self.hide_frame,new_width)    
+            self.window.after(10, self.hide_frame,new_width)  
         else:
             self.frame_open = False
 

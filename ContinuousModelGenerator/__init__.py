@@ -11,3 +11,5 @@ from .view.equation_view_ctk import GUI_Equation
 from .view.condition_view import GUI_Condition
 from .view.simulation_view import GUI_Simulation
 from .controller import GeneratorController
+from .log_handler import LogHandler
+from .log_codes import LOG_CODES

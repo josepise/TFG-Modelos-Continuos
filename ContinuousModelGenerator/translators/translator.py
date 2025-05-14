@@ -203,7 +203,20 @@ class SimulationModelGenerator(ABC):
             self.simulation_time = [0,50,0.1] # [t0, tf, dt]
 
 
+    def get_return_values(self):
+        """
+        Devuelve los valores de retorno de la simulación.
+        """
+        cadena = ""
+        
+        # Escribmos el nombre de la ecuación como salida en el mismo orden que está en 
+        # var_identifiers.
+        for var_name in self.var_identifiers.keys():
+            for equation in self.equations:
+                if var_name == equation.get_name():
+                    cadena += f"{equation.get_name()}"
+                    if list(self.var_identifiers.keys()).index(var_name) < len(self.var_identifiers) - 1:
+                        cadena += ", "
+                    break
 
-
-
-    
+        return cadena

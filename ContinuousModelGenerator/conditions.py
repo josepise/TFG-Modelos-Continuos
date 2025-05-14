@@ -25,8 +25,7 @@ class Condition:
         #Procesamos la condición y la convertimos en una expresión de SymPy.
         for i in range(len(self.text_condition[0])):
             #Convertimos la condición en una expresión de SymPy utilizando el método sympify().
-            self.conditions[i] = sp.sympify(self.text_condition[0][i])
-   
+                self.conditions[i] = sp.sympify(self.text_condition[0][i])    
         #Guardamos las variables que forman parte de la condición.
         self.variables = sp.symbols(self.text_condition[1])
 
@@ -94,3 +93,56 @@ class Condition:
         #Devuelve la condición en forma de string utilizando la función sp.latex().
      
         return [sp.latex(self.conditions[i]) for i in range(len(self.conditions))]
+    
+    def check_components(self):
+        
+        cond_symbols=[]
+        for con in self.conditions:
+            #Comprobamos si la condición es válida.
+            operators=[op for op in self.avaliable_operators if op in str(con)]
+
+            if  len(operators) == 0:
+                return ("INVALID_INPUT_COND_EXP", ",".join(self.avaliable_operators))
+
+            elif len(operators) > 1:
+                op_str= ",".join(operators)
+
+                #Si hay más de un operador, mostramos un mensaje de error.
+                return ("INVALID_INPUT_COND_MULTIPLE_OP",op_str)
+            
+            cond_symbols += [str(symbol) for symbol in con.free_symbols]
+            
+        cond_symbols = list(set(cond_symbols))
+            
+
+
+        # Comprobamos que los símbolos se encuentren en las expresiones de la condición
+        for s in self.get_symbols():
+            if str(s) not in cond_symbols:
+                return ("INVALID_COND_VAR_NOT_APPEAR", s)
+        
+
+        # Comprobamos que las constantes se encuentren en las expresiones de la condición
+        for c in self.constants.keys():
+            if str(c) not in cond_symbols:
+                return ("INVALID_COND_CONSTANT_NOT_APPEAR", c)
+            
+        # Comprobamos que no queden simbolos libres en la ecuación
+        str_symbols={str(symbol) for symbol in self.variables}
+
+        for s in cond_symbols:
+            # Si el símbolo está en la ecuación y no es una variable/constante, lo consideramos un error
+            if s not in str_symbols and s not in self.constants.keys():
+                return ("INVALID_COND_FREE_SYMBS", s)    
+            
+        # Comprobamos que no haya simbolos iguales como variables y constantes
+        symbols = list(self.variables)+list(self.constants.keys())
+        var_const = set({str(symbol) for symbol in symbols})
+
+        for s in var_const:
+            if s in self.constants.keys() and s in str_symbols:
+                return ("INVALID_COND_DUP_SYMBS", s)
+
+            
+        return (None, None)
+        

@@ -1,7 +1,8 @@
-import yaml
 from .translators import (python_translator, cpp_translator, java_translator, translator)
 from .equation import Equation
 from .conditions import Condition
+
+import yaml, os
 
 
 class ContinuousModelGenerator:
@@ -30,10 +31,12 @@ class ContinuousModelGenerator:
         self.method = None
         self.translator = None
         self.output = None
+        self.path_file = None
         self.available_output = {"java": ["csv"], "python": ["csv","plot"], "cpp": ["csv"]}
         self.available_methods = {"Euler": "euler", "Euler Mejorado": "euler-improved",
                                   "Runge Kutta 4": "runge-kutta-4", 
                                   "Runge Kutta Fehlberg": "runge-kutta-fehlberg"}
+        self.packages = {"python":["python"], "cpp":["g++"], "java":["javac", "java"]}
 
           
     def get_equations(self):
@@ -131,6 +134,12 @@ class ContinuousModelGenerator:
         Obtiene la lista de métodos numéricos disponibles.
         """
         return self.available_methods.keys()
+    
+    def get_path(self):
+        """
+        Obtiene el directorio de salida.
+        """
+        return self.path_file
 
     def generate_file(self):
         """
@@ -223,7 +232,12 @@ class ContinuousModelGenerator:
 
     def add_equation(self,var_eq, text_equation, text_var,constant):
         eq = Equation(var_eq,text_equation, text_var, constant)
-        self.equations.append(eq)
+        error = eq.check_components()
+        
+        if error==(None, None):
+            self.equations.append(eq)
+
+        return error
 
     def edit_equation(self,var_eq, text_equation, text_var, constant, index):
         """
@@ -233,7 +247,12 @@ class ContinuousModelGenerator:
             raise IndexError("Índice fuera de rango.")
         
         eq = Equation(var_eq,text_equation, text_var, constant)
-        self.equations[index] = eq
+        error = eq.check_components()
+        
+        if error==(None, None):
+            self.equations[index] = eq
+
+        return error
 
     def delete_equation(self, index):
         """
@@ -246,7 +265,12 @@ class ContinuousModelGenerator:
 
     def add_condition(self, text_exp ,  text_action, text_var,text_constant):
         cond = Condition(text_exp, text_action, text_var, text_constant)
-        self.conditions.append(cond)
+        error = cond.check_components()
+        
+        if error==(None, None):
+            self.conditions.append(cond)
+
+        return error
 
     def edit_condition(self, text_exp ,  text_action, text_var,text_constant, index):
         """
@@ -255,9 +279,14 @@ class ContinuousModelGenerator:
         if index < 0 or index >= len(self.conditions):
             raise IndexError("Índice fuera de rango.")
         
-        cond = Condition(text_exp, text_action, text_var, text_constant)
-        self.conditions[index] = cond
-
+        cond = Condition(text_exp, text_action, text_var, text_constant)        
+        error = cond.check_components()
+        
+        if error==(None, None):
+            self.conditions[index] = cond
+            
+        return error
+        
     def delete_condition(self, index):
         """
         Elimina una condición de la lista de condiciones.
@@ -318,8 +347,55 @@ class ContinuousModelGenerator:
         """
         Ejecuta la simulación utilizando el traductor seleccionado.
         """
-        self.translator.compile()
         self.translator.run(args)
+
+    def check_command(self, commands):
+        # Ejecuta el comando y captura el código de salida
+        missing_commands = ""
+        for command in commands:
+            exit_code = os.system(f"{command} --version >nul 2>&1")
+            if exit_code != 0:
+                missing_commands += f"{command} "
+        
+        return missing_commands
+        
+
+    def check_generation(self):
+
+        # Comprobamos que haya sido establecido el lenguaje, la salida , 
+        # el método y al menos una ecuación
+        if self.get_translator_type() == None:
+            return ("GENERATION_FAILED_NO_LANGUAGE", None)
+        elif self.get_output() == None:
+            return ("GENERATION_FAILED_NO_OUTPUT", None)
+        elif len(self.get_equations()) == 0:
+            return ("GENERATION_FAILED_NO_EQUATIONS", None)
+        
+        # Comprobar que los nombres de las ecuaciones están en get_var_identifiers
+        equation_names = [str(eq.get_name()) for eq in self.get_equations()]
+        symbols = list(set([str(symbol) for eq in self.get_equations() for symbol in eq.get_symbol()]))
+        print(symbols) 
+        print(equation_names)
+        missing_names = [name for name in equation_names if name not in symbols]
+        if missing_names:
+            return ("GENERATION_FAILED_MISSING_VARS", missing_names)
+        
+        return (None, None)
+
+
+    def check_compiler(self):
+        missing_commands = self.check_command(self.packages[self.get_translator_type()])
+        
+        if missing_commands:
+            return ("GENERATION_FAILED_NO_COMPILER", missing_commands)
+        
+        return (None, None)
+    
+    def compile(self):
+        """
+        Compila el código generado por el traductor.
+        """
+        self.translator.compile()
 
     def get_output_simulation_file(self, file_path):
         """

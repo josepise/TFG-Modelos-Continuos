@@ -36,8 +36,9 @@ class PythonSimulationGenerator(SimulationModelGenerator):
         self.file.close()
 
     def write_head_file(self):
-        #Añadimos los imports necesarios.
-        self.file.write("# -*- mode: python ; coding: utf-8 -*-\n")
+        #Comprobamos si el sistema operativo Windows.
+        if os.name == 'nt':
+            self.file.write("# -*- mode: python ; coding: utf-8 -*-\n")
         self.file.write("import numpy as np\n")
         self.file.write("import matplotlib.pyplot as plt\n")
         self.file.write("import sys\n")
@@ -142,20 +143,8 @@ class PythonSimulationGenerator(SimulationModelGenerator):
         
         self.file.write("\n")
 
-        # Generamos la cadena que va a ser concatenada a la salida de la función deriv.
-        cadena = ""
+        cadena = self.get_return_values()
         
-
-        # Escribmos el nombre de la ecuación como salida en el mismo orden que está en 
-        # var_identifiers.
-        for var_name in self.var_identifiers.keys():
-            for equation in self.equations:
-                if var_name == equation.get_name():
-                    cadena += f"{equation.get_name()}"
-                    if list(self.var_identifiers.keys()).index(var_name) < len(self.var_identifiers) - 1:
-                        cadena += ", "
-                    break
-        #Añadimos la salida de la función deriv.
         self.file.write(f"\treturn [{cadena}]\n")
         self.file.write("\n\n")
 

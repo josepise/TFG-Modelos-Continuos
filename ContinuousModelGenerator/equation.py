@@ -53,6 +53,7 @@ class Equation:
             self.text_equation.append(simbols)
             self.constant_values.update(constant_values)
             self.process_equations()
+            
           
     def get_name(self):
         """Devuelve el nombre de la ecuación."""
@@ -133,38 +134,47 @@ class Equation:
         Este método realiza varias comprobaciones en la ecuación almacenada en el objeto:
         1. Verifica que todos los símbolos especificados estén presentes en la ecuación.
         2. Verifica que todas las constantes especificadas estén presentes en la ecuación.
-        3. Verifica que todas las constantes tengan un valor asignado.
-        4. Intenta sustituir las constantes en la ecuación con sus valores correspondientes.
+        3. Verifica que no haya símbolos libres en la ecuación que no estén definidos como variables o constantes.
+        4. Verifica que no haya símbolos definidos como variables y constantes al mismo tiempo.
         Returns:
-            str: Una cadena de texto que contiene los errores encontrados durante las comprobaciones.
-                 Si no se encuentran errores, la cadena estará vacía.
+            tuple: (error_code, elemento) donde error_code es un string con el tipo de error encontrado,
+            y elemento es el símbolo o constante que causó el error. Si no se encuentran errores, retorna (None, None).
         Errores posibles:
-            - Error(Missing Symbol): Indica que un símbolo especificado no se encuentra en la ecuación.
-            - Error(Missing Constant): Indica que una constante especificada no se encuentra en la ecuación.
-            - Error(Missing Constant Value): Indica que una constante especificada no tiene un valor asignado.
-            - Error(Wrong Constants Values): Indica que los valores de las constantes no son válidos para la sustitución en la ecuación.
+            - "INVALID_EQUATION_VAR_NOT_APPEAR": Un símbolo especificado no se encuentra en la ecuación.
+            - "INVALID_EQUATION_CONSTANT_NOT_APPEAR": Una constante especificada no se encuentra en la ecuación.
+            - "INVALID_EQUATION_FREE_SYMBS": Un símbolo libre en la ecuación no está definido como variable o constante.
+            - "INVALID_EQUATION_DUP_SYMBS": Un símbolo está definido como variable y constante al mismo tiempo.
         """
-        errors = ""
 
         # Convertimos free_symbols a un conjunto de strings para facilitar la comparación
         equation_symbols = {str(symbol) for symbol in self.equation.free_symbols}
 
         # Comprobamos que los símbolos se encuentren en la ecuación
-        for s in self.simbol:
+        for s in self.get_symbol():
             if str(s) not in equation_symbols:
-                errors += f"\nError(Missing Symbol): El símbolo {s} no se encuentra en la ecuación."
+                return ("INVALID_EQUATION_VAR_NOT_APPEAR", s)
         
 
         # Comprobamos que las constantes se encuentren en la ecuación
-        for c in self.constants_values.keys():
+        for c in self.constant_values.keys():
             if str(c) not in equation_symbols:
-                errors += f"\nError(Missing Constant): La constante {c} no se encuentra en la ecuación."
-        
+                return ("INVALID_EQUATION_CONSTANT_NOT_APPEAR", c)
+            
+        # Comprobamos que no queden simbolos libres en la ecuación
+        str_symbols={str(symbol) for symbol in self.get_symbol()}
 
-        try:
-            self.equation = self.equation.subs(self.constant_values)
-        except:
-            errors += f"\nError(Wrong Constants Values): Los valores de las constantes no son válidos."
+        for s in equation_symbols:
+            # Si el símbolo está en la ecuación y no es una variable/constante, lo consideramos un error
+            if s not in str_symbols and s not in self.constant_values.keys():
+                return ("INVALID_EQUATION_FREE_SYMBS", s)    
+            
+        # Comprobamos que no haya simbolos iguales como variables y constantes
+        symbols = list(self.get_symbol())+list(self.constant_values.keys())
+        var_const = set({str(symbol) for symbol in symbols})
 
-        return errors
-    
+        for s in var_const:
+            if s in self.constant_values.keys() and s in str_symbols:
+                return ("INVALID_EQUATION_DUP_SYMBS", s)
+
+            
+        return (None, None)

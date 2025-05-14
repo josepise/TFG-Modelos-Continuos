@@ -25,7 +25,7 @@ class GUI_Equation():
             
         # Contenedor principal
         self.main_container = ctk.CTkFrame(self.parent_frame, fg_color="transparent", corner_radius=18)
-        self.main_container.pack(expand=True, fill="both", padx=10, pady=10)
+        self.main_container.pack(fill="both", padx=10, pady=10)
 
         # Frame para los campos de entrada
         input_frame = ctk.CTkFrame(self.main_container, fg_color="transparent", corner_radius=10)
@@ -96,20 +96,34 @@ class GUI_Equation():
         )
         self.add_edit_button.pack(side="right", padx=10, pady=5)
 
+        self.cancel_button = ctk.CTkButton(
+            button_frame,
+            text="Cancelar",
+            command=self.controler.toggle_frame,
+            corner_radius=8,
+            fg_color=self.color_aux,
+            text_color="#FFFFFF"
+        )
+        self.cancel_button.pack(side="right", padx=10, pady=5)
+
         # Cargar datos si se está en modo edición
         if selected:
             self.selected = selected
             self.load_data()
 
     def add_equation(self, text_equation, text_var, text_constants):
-        self.controler.add_equation(text_equation, text_var, text_constants)
-        self.controler.toggle_frame()
-        self.clear_entries()
+        success=self.controler.add_equation(text_equation, text_var, text_constants)
+        
+        if success:
+            self.controler.toggle_frame()
+            self.clear_entries()
 
     def edit_equation(self, text_equation, text_var, text_constants):
-        self.controler.edit_equation(text_equation, text_var, text_constants, self.selected)
-        self.controler.toggle_frame()
-        self.clear_entries()
+        success=self.controler.edit_equation(text_equation, text_var, text_constants, self.selected)
+        
+        if success:
+            self.controler.toggle_frame()
+            self.clear_entries()
 
     def load_data(self):
         str_eq, list_sym, list_const = self.controler.get_equation(self.selected)

@@ -12,9 +12,7 @@ class JavaSimulationGenerator(SimulationModelGenerator):
         self.pattern_pow = r'(inp\.get\(\d+\))\s*\*\*\s*(\d+)'
 
     def generate_file(self):
-        # Create the Java simulation file in the folder ./models/
-        os.makedirs("./models/", exist_ok=True)
-        self.file = open(f"./models/{self.name_file}.java", "w")
+        self.file = open(f"{self.path_file}/{self.name_file}.java", "w")
 
         # Write the file
 
@@ -28,6 +26,8 @@ class JavaSimulationGenerator(SimulationModelGenerator):
         # Add the integration method
         if self.numerical_method == "euler":
             self.write_euler_method()
+        elif self.numerical_method == "euler-improved":
+            self.write_euler_improved_method()
         elif self.numerical_method == "runge-kutta-4":
             self.write_runge_kutta_4_method()
         elif self.numerical_method == "runge-kutta-fehlberg":
@@ -111,7 +111,6 @@ class JavaSimulationGenerator(SimulationModelGenerator):
 
     def write_equations(self):
         self.file.write("\tpublic static List<Double> deriv(List<Double> inp) {\n")
-        self.file.write("\t\tList<Double> out = new ArrayList<>(Collections.nCopies(n_equations, 0.0));\n")
 
         self.write_conditionals()
 
@@ -121,10 +120,14 @@ class JavaSimulationGenerator(SimulationModelGenerator):
             subs_dict = {str(sym): sp.Symbol(f"inp.get({self.var_identifiers[str(sym)]})") for sym in symbols}
 
             eq = self.prepare_equations(equation, subs_dict)
-            self.file.write(f"\t\tout.set({i}, {eq});\n")
+            self.file.write(f"\t\tDouble {equation.get_name()}={eq};\n")
 
-        self.file.write("\t\treturn out;\n")
+        cadena = self.get_return_values()
+
+        #Añadimos la salida de la función deriv.
+        self.file.write(f"\t\treturn Arrays.asList({cadena});\n")
         self.file.write("\t}\n\n")
+
 
     def write_euler_method(self):
         self.file.write("\tpublic static void oneStepEuler(double hh, int step) {\n")

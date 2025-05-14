@@ -2,14 +2,17 @@ from .model import ContinuousModelGenerator as SimulationModel  #Importa la clas
 from .view.main_view_ctk import GUI_CTK  as SimulationView  #Importa la clase SimulationView del archivo view.py
 from .view.equation_view_ctk import GUI_Equation
 from .view.condition_view_ctk import GUI_Condition
+from .log_handler import LogHandler
 
 
 class GeneratorController:
     
     def __init__ (self):
+        self.log_handler = LogHandler()  # Inicializa el manejador de errores
         self.model = SimulationModel()        #Creamos una instancia de la clase SimulationModel
         self.view = SimulationView(self)  #Crea la vista y le pasa el controlador
         self.traductor=None                  #Inicializa el traductor como None
+        
     
 
     def add_equation(self, text_equation:str, text_var:str, text_constant:str):
@@ -24,15 +27,28 @@ class GeneratorController:
             text_constant (str): Las constantes de la ecuación en formato "clave=valor", separadas por comas. Si no se 
                                  proporciona un valor, se asignará 0.0 por defecto.
         Returns:
-            None
-        """        
+            bool: True si la ecuación se añade correctamente, False en caso contrario.
+        """     
+        success = True
         var, text_equation, text_var, constants = self.prepare_equation(text_equation, text_var, text_constant)  
+        
+        if var != None and text_equation != None and text_var != None: 
+            #Añadimos la ecuación al modelo
+            error=self.model.add_equation(var,text_equation, text_var, constants) 
 
-        #Añadimos la ecuación al modelo
-        self.model.add_equation(var,text_equation, text_var, constants) 
+            if error[0] == None:
+                #Actualiza la lista de ecuaciones en la vista
+                self.view.update_dropdown_equation(self.get_list_equations())
+                self.log_handler.show_success_prm("SUCCESS_ADD_EQUATION",len(self.get_list_equations()))
+            else:
+                success = False
+                self.log_handler.show_error_prm(error[0], error[1])  #Muestra el error en la vista
+        else:
+            success = False
 
-        #Actualiza la lista de ecuaciones en la vista
-        self.view.update_dropdown_equation(self.get_list_equations())           
+
+        return success
+
 
     def add_condition(self, text_exp: str, text_act: str, text_var: str, text_constant: str):
         """
@@ -49,13 +65,26 @@ class GeneratorController:
         Returns:
             None
         """        
-        list_exp, list_act, text_var, constants = self.prepare_condition(text_exp, text_act, text_var, text_constant)  
+        success = True
 
-        #Añadimos la condición al modelo
-        self.model.add_condition(list_exp,list_act, text_var, constants) 
+        list_exp, list_act, text_var, constants = self.prepare_condition(text_exp, text_act, text_var, text_constant) 
 
-        #Actualiza la lista de condiciones en la vista
-        self.view.update_dropdown_condition(self.get_list_conditions())
+
+        if list_exp != None and list_act != None and text_var != None and constants != None: 
+            #Añadimos la ecuación al modelo
+            error=self.model.add_condition(list_exp,list_act, text_var, constants) 
+
+            if error[0] == None:
+                #Actualiza la lista de ecuaciones en la vista y mostramos el mensaje de éxito
+                self.view.update_dropdown_condition(self.get_list_conditions())
+                self.log_handler.show_success_prm("SUCCESS_ADD_CONDITION", len(self.get_list_conditions()))  
+            else:
+                success = False
+                self.log_handler.show_error_prm(error[0], error[1])  #Muestra el error en la vista
+        else:
+            success = False
+         
+        return success
                       
     def get_equation(self, name:str):
         
@@ -143,12 +172,30 @@ class GeneratorController:
         return self.model.get_parameters()                            #Devuelve la lista de parámetros del modelo
     
     def edit_equation(self, text_equation:str, text_var:str, text_constant:str, name:str):
+        success = True
+        
         name = name.replace("Ecuacion_", "")
         index = int(name) - 1
 
-        name,text_equation, text_var, constants = self.prepare_equation(text_equation, text_var, text_constant)
+        var,text_equation, text_var, constants = self.prepare_equation(text_equation, text_var, text_constant)
+        
+        if var != None and text_equation != None and text_var != None: 
+            #Añadimos la ecuación al modelo
+            error=self.model.edit_equation(var, text_equation, text_var, constants, index) 
 
-        self.model.edit_equation(name,text_equation,text_var,constants, index)        
+            if error[0] == None:
+                #Muestra el mensaje de éxito en la vista
+                self.log_handler.show_success_prm("SUCCESS_EDIT_EQUATION", name)  
+            else:
+                #Muestra el error en la vista
+                self.log_handler.show_error_prm(error[0], error[1])  
+                success = False
+        else:
+            success = False
+
+        return success
+
+
 
     def edit_condition(self, text_exp:str, text_act:str, text_var:str, text_constant:str, name:str):
         name = name.replace("Condicion_", "")
@@ -172,7 +219,8 @@ class GeneratorController:
         index = int(name) - 1
 
         self.model.delete_equation(index)                                 
-        self.view.update_dropdown_equation(self.get_list_equations())      
+        self.view.update_dropdown_equation(self.get_list_equations())
+        self.log_handler.show_success_prm("SUCCESS_DELETE_EQUATION", index)      
 
     def delete_condition(self, name:str):
         """
@@ -198,18 +246,28 @@ class GeneratorController:
         self.model.set_method(method)                             
 
     def set_output(self, output):
-        self.model.set_output_type(output)                         
+        self.model.set_output_type(output) 
+
+    def set_log_label(self, label):
+        self.log_handler.set_log_label(label)                        
 
     def prepare_equation(self, text_equation:str, text_var:str, text_constant:str):
          
         #Eliminamos los espacios en blanco de la ecuación
         text_equation = text_equation.replace(" ", "")  
 
-        name, eq = text_equation.split("=")  #Dividimos la ecuación en nombre y ecuación
-
-
+        try:
+            name, eq = text_equation.split("=")  #Dividimos la ecuación en nombre y ecuación
+        except ValueError:
+            self.log_handler.show_error("INVALID_INPUT_EQUATION_EQUAL")
+            return None, None, None, None
+        
         #Eliminamos las comas en el texto de las variables
         text_var=text_var.replace(",", " ")
+
+        if not text_var or text_var.strip() == "":
+            self.log_handler.show_error("INVALID_INPUT_EQUATION_VAR")
+            return None, None, None, None
 
         #Eliminamos los espacios en blanco de las constantes
         text_constant = text_constant.replace(" ", "")
@@ -235,17 +293,34 @@ class GeneratorController:
         
         #Eliminamos los espacios en blanco de la ecuación
         text_exp = text_exp.replace(" ", "")  
+        text_act = text_act.replace(" ", "")
+        text_var = text_var.replace(" ", "")
+        text_constant = text_constant.replace(" ", "")
+
+        if text_exp == "" :
+            self.log_handler.show_error("INVALID_INPUT_COND_EXP")
+            return None, None, None, None
+        elif text_act == "":
+            self.log_handler.show_error("INVALID_INPUT_COND_ACT")
+            return None, None, None, None
+        elif text_var == "":
+            self.log_handler.show_error("INVALID_INPUT_COND_VAR")
+            return None, None, None, None
+    
 
         # Formamos una lista donde cada elemento se encuentra separado con una coma en el string
         if "," in text_exp:
             list_exp = text_exp.split(",")
         else:
             list_exp = [text_exp]  
+
         
         if "," in text_act:
             list_act = text_act.split(",")
         else:
             list_act = [text_act]
+
+        
 
         #Eliminamos las comas en el texto de las variables
         text_var=text_var.replace(",", " ")
@@ -266,6 +341,16 @@ class GeneratorController:
 
         return list_exp, list_act, text_var, constants
 
+    def check_generator(self):
+        errors=self.model.check_generation()
+
+        if errors[0] != None:
+            #Muestra el error en la vista
+            self.log_handler.show_error_prm(errors[0], errors[1]) 
+            return False  
+
+        return True                             
+
     def generate(self, path:str, name:str):
         """
         Genera el archivo de salida.
@@ -276,10 +361,41 @@ class GeneratorController:
         self.model.set_file_name(name)                                          #Establece el nombre del archivo de salida
         self.model.set_path(path)                                               #Establece el directorio del archivo de salida
         self.model.set_translator()                                             #Establece el lenguaje
-        self.model.generate_file()                                              #Genera el archivo de salida
+
+        try:
+            self.model.generate_file()
+        except Exception as e:
+            self.log_handler.show_error_prm("GENERATION_ERROR", str(e))
+            return False 
+          
 
         #Habilita el botón de simulación en la vista  
-        self.view.simulate_button.configure(state="normal", fg_color="#3b8ed0", text_color="#FFFFFF")          
+        self.view.simulate_button.configure(state="normal", fg_color="#3b8ed0", text_color="#FFFFFF")     
+
+        #Muestra el mensaje de éxito en la vista
+        path = self.model.get_path()
+        name = self.model.get_file_name()
+        self.log_handler.show_success_prm("GENERATION_SUCCESS", f"{path}/{name}") 
+
+        return True
+
+    def compile(self):
+
+        #Comprobamos si hay errores en la generación del archivo de salida
+        errors=self.model.check_compiler()                                 
+       
+        #Compila el archivo de salida
+        if errors[0] == None:
+            self.model.compile()
+
+            #Muestra el mensaje de éxito en la vista     
+            self.log_handler.show_success_prm("GENERATION_SUCCESS", self.model.get_file_name()) 
+
+        else:
+            #Muestra el error en la vista
+            self.log_handler.show_error_prm(errors[0], errors[1])
+            
+        return errors[0] == None
 
     def execute(self):
         """
@@ -316,33 +432,30 @@ class GeneratorController:
     def toggle_frame(self, mode:str=None ,option:str=None, selected:str=None):
         frame_width = self.view.aux_frame.winfo_width()  #Obtenemos el ancho del frame auxiliar
         
-        if self.view.frame_open:
-            self.view.hide_frame(frame_width)
-            self.view.update_dropdown_condition(self.get_list_conditions())
-            self.view.update_dropdown_equation(self.get_list_equations())
-            self.view.update_dropdown_lang(self.get_list_languages())
-            self.view.update_dropdown_output(self.get_list_output())
-            self.view.update_dropdown_method(self.get_list_methods())
-            
+        if self.view.frame_open: 
             if hasattr(self.view, 'eq_frm'):
                 self.view.eq_frm.delete()
                 del self.view.eq_frm
 
-        else:
-            aux_frame = GUI_Equation if mode == "eq" else GUI_Condition if mode == "cond" else None
+            self.view.hide_frame(frame_width)
+            self.aux_frame = self.view.aux_frame.pack_forget()  # Oculta el frame auxiliar
+            self.view.update_dropdown_condition(self.get_list_conditions())
+            self.view.update_dropdown_equation(self.get_list_equations())
+            self.view.update_dropdown_lang(self.get_list_languages(),self.model.get_translator_type())
+            self.view.update_dropdown_output(self.get_list_output(),self.model.get_output())
+            self.view.update_dropdown_method(self.get_list_methods(),self.model.get_method())
+            self.view.main_frame.pack(side="top", anchor="center", fill="both", padx=10, pady=10, expand=True)  # Muestra el frame principal
+            self.view.button_frame.pack(side="bottom", anchor="e", padx=10, pady=10)  # Muestra el frame de botones
+            
 
-            self.view.show_frame(frame_width ,aux_frame, option, selected)  
-            self.view.dropdown_cond.pack_forget()
-            self.view.dropdown_eq.pack_forget()
-            self.view.dropdown_lang.pack_forget()
-            self.view.dropdown_output.pack_forget()
-            self.view.dropdown_method.pack_forget()
-            self.view.add_condition_button.pack_forget()
-            self.view.edit_condition_button.pack_forget()
-            self.view.delete_condition_button.pack_forget()
-            self.view.add_equation_button.pack_forget()
-            self.view.edit_equation_button.pack_forget()
-            self.view.delete_equation_button.pack_forget()
+        else:
+            type = GUI_Equation if mode == "eq" else GUI_Condition if mode == "cond" else None
+            self.view.main_frame.pack_forget()  # Oculta el frame principal
+            self.view.button_frame.pack_forget()  # Oculta el frame de botones
+            self.view.aux_frame.pack(side="left", anchor="center",padx=10, pady=10, expand=True)
+            self.view.show_frame(frame_width ,type, option, selected)  
+            
+            
             
     def new_file(self):
         self.model=SimulationModel()                                         

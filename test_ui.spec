@@ -1,8 +1,10 @@
 # -*- mode: python ; coding: utf-8 -*-
 
 datas = [
-    ('ContinuousModelGenerator/resources/img/add.png', 'ContinuousModelGenerator/resources/img'),
-    ('ContinuousModelGenerator/resources/img/edit.png', 'ContinuousModelGenerator/resources/img'),
+    ('ContinuousModelGenerator/resources/img/add_1.png', 'ContinuousModelGenerator/resources/img'),
+    ('ContinuousModelGenerator/resources/img/edit_1.png', 'ContinuousModelGenerator/resources/img'),
+    ('ContinuousModelGenerator/resources/img/delete_1.png', 'ContinuousModelGenerator/resources/img'),
+    ('ContinuousModelGenerator/resources/img/icon.ico', 'ContinuousModelGenerator/resources/img'),
 ]
 
 a = Analysis(
