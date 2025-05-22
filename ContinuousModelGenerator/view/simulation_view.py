@@ -138,7 +138,7 @@ class GUI_Simulation(ctk.CTkToplevel):
         
         # Convertir los valores numéricos a float
         data = [[float(x.replace(',', '.')) for x in row] for row in result[1:]]  
-        
+
         # Transponer para obtener listas de columnas
         columns = list(zip(*data))
         
@@ -153,6 +153,7 @@ class GUI_Simulation(ctk.CTkToplevel):
         for i in range(1, len(header)):
             ax.plot(t, columns[i], label=header[i])
 
+        # Configurar gráfico
         ax.set_xlabel('Tiempo')
         ax.set_ylabel('Valores')
         ax.legend()

@@ -39,6 +39,7 @@ class GeneratorController:
             if error[0] == None:
                 #Actualiza la lista de ecuaciones en la vista
                 self.view.update_dropdown_equation(self.get_list_equations())
+                self.toggle_frame()
                 self.log_handler.show_success_prm("SUCCESS_ADD_EQUATION",len(self.get_list_equations()))
             else:
                 success = False
@@ -185,7 +186,8 @@ class GeneratorController:
 
             if error[0] == None:
                 #Muestra el mensaje de éxito en la vista
-                self.log_handler.show_success_prm("SUCCESS_EDIT_EQUATION", name)  
+                self.log_handler.show_success_prm("SUCCESS_EDIT_EQUATION", name)
+                self.toggle_frame()
             else:
                 #Muestra el error en la vista
                 self.log_handler.show_error_prm(error[0], error[1])  

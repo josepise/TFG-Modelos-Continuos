@@ -115,7 +115,6 @@ class GUI_Equation():
         success=self.controler.add_equation(text_equation, text_var, text_constants)
         
         if success:
-            self.controler.toggle_frame()
             self.clear_entries()
 
     def edit_equation(self, text_equation, text_var, text_constants):

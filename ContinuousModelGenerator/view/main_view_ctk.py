@@ -68,11 +68,11 @@ class GUI_CTK:
         # self.window_dash()
     
         #Añadir panel de errores
-        self.log_frame = ctk.CTkFrame(self.window, fg_color="#FFFFFF", corner_radius=18, height=25)
-        self.log_frame.pack(side="bottom", anchor="s", fill="x",pady=15, padx=15)
-        self.log_label = ctk.CTkLabel(self.log_frame, text="", text_color="red", anchor="w", justify="left")
-        self.log_label.pack(side="left", anchor="w", padx=5, pady=5)
-        self.controller.set_log_label(self.log_label)
+        log_frame = ctk.CTkFrame(self.window, fg_color="#FFFFFF", corner_radius=18, height=25)
+        log_frame.pack(side="bottom", anchor="s", fill="x",pady=15, padx=15)
+        log_label = ctk.CTkLabel(log_frame, text="", text_color="red", anchor="w", justify="left")
+        log_label.pack(side="left", anchor="w", padx=5, pady=5)
+        self.controller.set_log_label(log_label)
 
         self.top_menu()
 

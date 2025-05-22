@@ -335,3 +335,5 @@ class JavaSimulationGenerator(SimulationModelGenerator):
     def run(self,args=None):
         os.system(f"java -cp {self.path_file} {self.name_file} \
                  {args} ")
+        print(f"java -cp {self.path_file} {self.name_file} \
+                 {args} ")

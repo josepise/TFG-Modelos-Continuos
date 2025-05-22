@@ -1,25 +1,19 @@
 import sympy as sp
-from .equation import Equation
 
 class Condition:
     
-    def __init__(self, text_equation, text_result, text_variables, constants):
+    def __init__(self, text_condition, text_result, text_variables, constants):
         #Inicializamos los valores de la condición.
-        self.text_condition = [text_equation,text_variables, text_result]  # Lista de expresiones que definen la condición.
-        self.avaliable_operators = ["<", "<=", ">", ">=", "==", "!="]      # Lista de operadores disponibles.
+        self.text_condition = [text_condition,text_variables, text_result]  # Lista de expresiones que definen la condición.
+        self.available_operators = ["<", "<=", ">", ">=", "==", "!="]      # Lista de operadores disponibles.
         self.constants = constants                                         # Este objeto siempre será un diccionario en el  que las claves son los nombres de las variables
                                                                            # y los valores son los valores de las variables.
         self.variables = None                                              # Lista de variables que forman parte de la condición.
         self.result = [None] * len(text_result)                            # Lista de expresiones que se aplicaran cuando se cumpla la condición.
-        self.conditions = [None] * len(text_equation)                      # Lista de objetos de Sympy que definen las condiciones.
+        self.conditions = [None] * len(text_condition)                      # Lista de objetos de Sympy que definen las condiciones.
 
         self.process_condition()                                          # Procesamos la condición
         
-    def add_condition(self, list_text_equation, result, constants):
-        #Añadimos una nueva condición a la lista de condiciones.
-        self.list_text_condition.append(list_text_equation)               # Añadimos la nueva condición a la lista de condiciones.
-        self.constants = constants                                        # Actualizamos el diccionario de constantes.
-        self.result.append(result)                                         # Añadimos el resultado a la lista de resultados.
     
     def process_condition(self):
         #Procesamos la condición y la convertimos en una expresión de SymPy.
@@ -38,7 +32,7 @@ class Condition:
 
     def get_available_operators(self):  
         #Devuelve la lista de operadores disponibles.
-        return self.avaliable_operators
+        return self.available_operators
 
     def get_symbols(self):
         #Devuelve la lista de símbolos de la condición.
@@ -99,10 +93,10 @@ class Condition:
         cond_symbols=[]
         for con in self.conditions:
             #Comprobamos si la condición es válida.
-            operators=[op for op in self.avaliable_operators if op in str(con)]
+            operators=[op for op in self.available_operators if op in str(con)]
 
             if  len(operators) == 0:
-                return ("INVALID_INPUT_COND_EXP", ",".join(self.avaliable_operators))
+                return ("INVALID_INPUT_COND_EXP", ",".join(self.available_operators))
 
             elif len(operators) > 1:
                 op_str= ",".join(operators)

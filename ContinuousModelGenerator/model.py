@@ -352,8 +352,14 @@ class ContinuousModelGenerator:
     def check_command(self, commands):
         # Ejecuta el comando y captura el código de salida
         missing_commands = ""
+        dict_commands = {
+            "python": "--version",
+            "g++": "--version",
+            "java": "-version",
+            "javac": "-version"
+        }
         for command in commands:
-            exit_code = os.system(f"{command} --version >nul 2>&1")
+            exit_code = os.system(f"{command} {dict_commands[command]} >nul 2>&1")
             if exit_code != 0:
                 missing_commands += f"{command} "
         
