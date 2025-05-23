@@ -43,23 +43,32 @@ class GUI_Simulation(ctk.CTkToplevel):
         self.tabview = ctk.CTkTabview(self.resultados_frame, corner_radius=10)
         self.tabview.pack(fill="both", expand=True, padx=10, pady=10)
 
-        # Pestaña para el gráfico
-        self.tab_grafico = self.tabview.add("Gráfico")
-        self.grafico_area = ctk.CTkFrame(self.tab_grafico, height=250, corner_radius=10)
-        self.grafico_area.pack(fill="both", expand=True, padx=10, pady=10)
-        ctk.CTkLabel(self.grafico_area, text="(Gráfico aquí)", anchor="center").pack(expand=True)
-
-        # Pestaña para los resultados
-        self.tab_resultados = self.tabview.add("Resultados")
-        self.text_frame = ctk.CTkFrame(self.tab_resultados, corner_radius=10)
-        self.text_frame.pack(fill="both", expand=True, padx=10, pady=10)
-
-        self.textbox = ctk.CTkTextbox(self.text_frame, wrap="word")
-        self.textbox.pack(fill="both", expand=True, padx=10, pady=10)
-        self.textbox.insert("end", "Resultados de simulación...\n")
+        self.add_simulacion_tab("Simulación 1")
 
         self.widget_parameter_panel() 
-        
+
+    
+    def add_simulacion_tab(self, nombre_simulacion):
+        # Crear pestaña para esta simulación
+        sim_tab = self.tabview.add(nombre_simulacion)
+
+       # Pestaña para el gráfico
+        tab_grafico = sim_tab.add("Gráfico")
+        grafico_area = ctk.CTkFrame(tab_grafico, height=250, corner_radius=10)
+        grafico_area.pack(fill="both", expand=True, padx=10, pady=10)
+        ctk.CTkLabel(grafico_area, text="(Gráfico aquí)", anchor="center").pack(expand=True)
+
+        # Pestaña para los resultados
+        tab_resultados = sim_tab.add("Resultados")
+        text_frame = ctk.CTkFrame(self.tab_resultados, corner_radius=10)
+        text_frame.pack(fill="both", expand=True, padx=10, pady=10)
+
+        textbox = ctk.CTkTextbox(text_frame, wrap="word")
+        textbox.pack(fill="both", expand=True, padx=10, pady=10)
+        textbox.insert("end", "Resultados de simulación...\n")
+
+
+
     def widget_parameter_panel(self):
         self.parametros_panel = ctk.CTkFrame(self, width=250, corner_radius=15)
         self.parametros_visible = False  # Estado inicial oculto

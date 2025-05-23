@@ -271,6 +271,11 @@ class JavaSimulationGenerator(SimulationModelGenerator):
             self.file.write("\t\tfor (int i = 1; i <= steps; ++i) {\n")
             self.file.write("\t\t\toneStepEuler(dt, i);\n")
             self.file.write("\t\t}\n")
+        elif self.numerical_method == "euler-improved":
+            self.file.write("\t\tint steps = (int) ((tf - t0) / dt);\n")
+            self.file.write("\t\tfor (int i = 1; i <= steps; ++i) {\n")
+            self.file.write("\t\t\toneStepEulerImproved(dt, i);\n")
+            self.file.write("\t\t}\n")
         elif self.numerical_method == "runge-kutta-4":
             self.file.write("\t\tint steps = (int) ((tf - t0) / dt);\n")
             self.file.write("\t\tfor (int i = 1; i <= steps; ++i) {\n")
