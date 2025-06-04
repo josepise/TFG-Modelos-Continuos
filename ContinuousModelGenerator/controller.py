@@ -1,3 +1,4 @@
+import re
 from .model import ContinuousModelGenerator as SimulationModel  #Importa la clase SimulationModel del archivo model.py
 from .view.main_view_ctk import GUI_CTK  as SimulationView  #Importa la clase SimulationView del archivo view.py
 from .view.equation_view_ctk import GUI_Equation
@@ -254,7 +255,7 @@ class GeneratorController:
         self.log_handler.set_log_label(label)                        
 
     def prepare_equation(self, text_equation:str, text_var:str, text_constant:str):
-         
+
         #Eliminamos los espacios en blanco de la ecuación
         text_equation = text_equation.replace(" ", "")  
 
@@ -264,6 +265,14 @@ class GeneratorController:
             self.log_handler.show_error("INVALID_INPUT_EQUATION_EQUAL")
             return None, None, None, None
         
+        patron = r'd([a-zA-Z_][a-zA-Z0-9_]*)/dt'
+        if not re.search(patron, name):
+            self.log_handler.show_error("INVALID_INPUT_EQUATION_NAME")
+            return None, None, None, None
+        else:
+            name = re.sub(patron, r'\1', name)  #Eliminamos d() y /dt del nombre de la ecuación
+
+
         #Eliminamos las comas en el texto de las variables
         text_var=text_var.replace(",", " ")
 

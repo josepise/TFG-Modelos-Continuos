@@ -481,7 +481,9 @@ class ContinuousModelGenerator:
         rows = []
         rows.append(["Ecuación"])
         for eq in self.get_equations():
-            rows.append([eq.get_text_equation()])
+            text_eq = f"d{eq.get_name()}/dt={eq.get_text_equation()}"
+            rows.append([text_eq])
+            
         tabla_ecuaciones = Table(rows, colWidths=[5*inch])
         tabla_ecuaciones.setStyle(style_table)
         elementos.append(tabla_ecuaciones)

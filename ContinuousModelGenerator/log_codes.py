@@ -6,6 +6,7 @@ LOG_CODES = \
             "INVALID_EQUATION_CONSTANT_NOT_APPEAR": "❗ Error: La constante \"{}\" no se encuentra definida en la ecuación.",
             "INVALID_EQUATION_FREE_SYMBS": "❗ Error: El símbolo \"{}\" no se encuentra definido como variable o constante.",
             "INVALID_EQUATION_DUP_SYMBS": "❗ Error: El símbolo \"{}\" se encuentra definido como variable y constante.",
+            "INVALID_INPUT_EQUATION_NAME": "❗ Error: El nombre de la ecuación no es válido.Debe ser de tipo d(var)/dt",
             "INVALID_INPUT_COND_EXP": "❗ Error: La expresión de la condición no está bien definida.",
             "INVALID_INPUT_COND_MULTIPLE_OP": "❗ Error: La expresión de la condición contiene más de un operador: \"{}\".",
             "INVALID_INPUT_COND_VAR": "❗ Error: No se encuentran definidas variables.",

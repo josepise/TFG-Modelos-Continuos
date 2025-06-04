@@ -2,6 +2,7 @@
 from tkinter import Frame, Button, Canvas, Entry
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from functools import partial
 import sympy as sp
 import customtkinter as ctk
 
@@ -10,6 +11,11 @@ class GUI_Equation():
         self.parent_frame = parent_frame
         self.controler = controller
         self.mode = mode
+        
+        #Placeholders para los campos de entrada
+        self.placeholder_equation = "dx/dt =a*x + b*y + c"
+        self.placeholder_var = "x, y"
+        self.placeholder_constants = "a, b, c"
 
         # Colores de la interfaz
         self.color_window = "#031240"
@@ -23,6 +29,8 @@ class GUI_Equation():
         for widget in self.parent_frame.winfo_children():
             widget.destroy()
             
+        text_color = "black" if mode == "edit" else "gray"
+
         # Contenedor principal
         self.main_container = ctk.CTkFrame(self.parent_frame, fg_color="transparent", corner_radius=18)
         self.main_container.pack(fill="both", padx=10, pady=10)
@@ -40,6 +48,20 @@ class GUI_Equation():
         self.text_entry_equation_window = ctk.CTkEntry(input_frame,border_width=2, 
                                                        border_color=self.color_bg)
         self.text_entry_equation_window.pack(side="top", fill="x", padx=10, pady=2)
+        
+        # Configurar el placeholder
+        self.text_entry_equation_window.insert(0, self.placeholder_equation)
+        self.text_entry_equation_window.configure(fg_color="white", text_color=text_color)
+        
+        # Vincular eventos de enfoque para el placeholder
+        self.text_entry_equation_window.bind("<FocusIn>", 
+                                             partial(self.on_focus_in, 
+                                                     self.text_entry_equation_window, 
+                                                     self.placeholder_equation))
+        self.text_entry_equation_window.bind("<FocusOut>", 
+                                             partial(self.on_focus_out, 
+                                                     self.text_entry_equation_window, 
+                                                    self.placeholder_equation))
 
         # Etiqueta "Variables"
         variables_label = ctk.CTkLabel(input_frame, text="Variables", fg_color="transparent", 
@@ -49,6 +71,18 @@ class GUI_Equation():
         # Entry para las variables
         self.text_entry_var = ctk.CTkEntry(input_frame, border_width=2, border_color=self.color_bg)
         self.text_entry_var.pack(side="top", fill="x", padx=10, pady=2)
+        self.text_entry_var.insert(0, self.placeholder_var)
+        self.text_entry_var.configure(fg_color="white", text_color=text_color)
+
+        # Configurar el placeholder
+        self.text_entry_var.bind("<FocusIn>", 
+                                             partial(self.on_focus_in, 
+                                                     self.text_entry_var, 
+                                                     self.placeholder_var))
+        self.text_entry_var.bind("<FocusOut>", 
+                                             partial(self.on_focus_out, 
+                                                     self.text_entry_var, 
+                                                    self.placeholder_var))
 
         # Etiqueta "Constantes"
         constants_label = ctk.CTkLabel(input_frame, text="Constantes", fg_color="transparent", 
@@ -58,6 +92,18 @@ class GUI_Equation():
         # Entry para las constantes
         self.text_entry_constants = ctk.CTkEntry(input_frame, border_width=2, border_color=self.color_bg)
         self.text_entry_constants.pack(side="top", fill="x", padx=10, pady=2)
+        self.text_entry_constants.insert(0, self.placeholder_constants)
+        self.text_entry_constants.configure(fg_color="white", text_color=text_color)
+        
+        # Configurar el placeholder
+        self.text_entry_constants.bind("<FocusIn>", 
+                                             partial(self.on_focus_in, 
+                                                     self.text_entry_constants, 
+                                                     self.placeholder_constants))
+        self.text_entry_constants.bind("<FocusOut>", 
+                                             partial(self.on_focus_out, 
+                                                     self.text_entry_constants, 
+                                                    self.placeholder_constants))
 
         # Frame para el canvas de LaTeX
         latex_frame = ctk.CTkFrame(self.main_container, corner_radius=10, fg_color="white", border_width=2, 
@@ -127,6 +173,12 @@ class GUI_Equation():
     def load_data(self):
         str_eq, list_sym, list_const = self.controler.get_equation(self.selected)
 
+        # Separamos la equacion en su parte izquierda y derecha
+        if '=' in str_eq:
+            left_side, right_side = str_eq.split('=', 1)
+            str_eq = f"d{left_side.strip()}/dt = {right_side.strip()}"
+
+
         # Cargar la ecuación en el Entry
         self.text_entry_equation_window.delete(0, "end")
         self.text_entry_equation_window.insert(0, str_eq)
@@ -186,3 +238,13 @@ class GUI_Equation():
     def delete(self):
         """Elimina el frame de la interfaz."""
         self.main_container.pack_forget()
+
+    def on_focus_in(self, entry, placeholder, event):
+        if entry.get() == placeholder and entry.cget("text_color") == "gray":
+            entry.delete(0, "end")
+            entry.configure(fg_color="white",text_color="black")
+
+    def on_focus_out(self, entry, placeholder, event):
+        if entry.get() == "":
+            entry.insert(0, placeholder)
+            entry.configure(fg_color="white", text_color="gray")

@@ -72,7 +72,6 @@ class GUI_CTK:
         
 
     def create_widgets(self):
-        # self.window_dash()
     
         #Añadir panel de errores
         log_frame = ctk.CTkFrame(self.window, fg_color="#FFFFFF", corner_radius=18, height=25)
@@ -138,24 +137,6 @@ class GUI_CTK:
     def create_label(self, father, text, side):
         label = ctk.CTkLabel(father, text=text, text_color=self.color_text, anchor="w", justify="left")
         label.pack(side=side, anchor="w", padx=5, pady=5)
-
-    def window_dash(self):
-        self.top_bar = ctk.CTkFrame(self.window,width=10, height=200, fg_color=self.color_window, corner_radius=0)
-        self.top_bar.pack(side="top",fill="x")
-        self.top_bar.bind("<Button-1>", self.start_move)
-        self.top_bar.bind("<B1-Motion>", self.do_move)
-
-        # Botón de cerrar
-        self.close_button = ctk.CTkButton(self.top_bar, text="x" ,fg_color="red", width=5, height=5, command=self.window.destroy, corner_radius=2.5) 
-        self.close_button.pack(side="right", anchor="center", padx=10, pady=5)
-
-        # Botón de minimizar
-        self.minimize_button = ctk.CTkButton(self.top_bar, text="_", width=5, height=5, command=self.window.iconify, corner_radius=5)
-        self.minimize_button.pack(side="right", padx=5, pady=5)
-
-        #Label transparente para aumentar la altura de la barra
-        self.label = ctk.CTkLabel(self.top_bar, text="", width=10, height=10, fg_color="transparent")
-        self.label.pack(side="top", padx=5)
 
     
     def top_menu(self):
