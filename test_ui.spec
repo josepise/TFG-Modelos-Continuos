@@ -5,6 +5,7 @@ datas = [
     ('ContinuousModelGenerator/resources/img/edit_1.png', 'ContinuousModelGenerator/resources/img'),
     ('ContinuousModelGenerator/resources/img/delete_1.png', 'ContinuousModelGenerator/resources/img'),
     ('ContinuousModelGenerator/resources/img/icon.ico', 'ContinuousModelGenerator/resources/img'),
+    ('ContinuousModelGenerator/resources/img/icon.png', 'ContinuousModelGenerator/resources/img'),
 ]
 
 a = Analysis(
@@ -12,7 +13,7 @@ a = Analysis(
     pathex=[],
     binaries=[],
     datas=datas,
-    hiddenimports=[],
+    hiddenimports=['PIL._tkinter_finder'],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],

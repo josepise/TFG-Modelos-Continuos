@@ -12,6 +12,10 @@ class GUI_Simulation(ctk.CTkToplevel):
         self.title("Simulación")
         self.geometry("1200x650")
         self.resizable(False, False)
+        
+        self.graphic_list = []  # Lista para almacenar frames de gráficos
+        self.result_list = []  # Lista para almacenar frames de resultados
+        self.fig_list = []  # Lista para almacenar figuras de matplotlib
 
         # === PANEL DE CONTROLES IZQUIERDO ===
         self.control_frame = ctk.CTkFrame(self, width=250, corner_radius=15)
@@ -25,7 +29,8 @@ class GUI_Simulation(ctk.CTkToplevel):
         self.tiempo_fin = ctk.CTkEntry(self.control_frame, placeholder_text="Ej: 10.0",width=120)
         self.tiempo_fin.pack(pady=5)
 
-        ctk.CTkLabel(self.control_frame, text="Δt / Tolerancia:").pack(pady=(10, 5))
+        text = "Tolerancia:" if self.controller.model.method == "runge-kutta-fehlberg" else "Δt"
+        ctk.CTkLabel(self.control_frame, text=text).pack(pady=(10, 5))
         self.dt_tol = ctk.CTkEntry(self.control_frame, placeholder_text="Ej: 0.01",width=120)
         self.dt_tol.pack(pady=5)
 
@@ -33,6 +38,10 @@ class GUI_Simulation(ctk.CTkToplevel):
         self.toggle_menu_btn.pack(pady=30)
 
         self.toggle_menu_btn = ctk.CTkButton(self.control_frame, text="Simular", command=self.controller.execute, width=120)
+        self.toggle_menu_btn.pack(pady=30)
+
+
+        self.toggle_menu_btn = ctk.CTkButton(self.control_frame, text="Exportar PDF", command=self.controller.export_pdf, width=120)
         self.toggle_menu_btn.pack(pady=30)
 
         # === ÁREA CENTRAL PARA RESULTADOS ===
@@ -44,28 +53,67 @@ class GUI_Simulation(ctk.CTkToplevel):
         self.tabview.pack(fill="both", expand=True, padx=10, pady=10)
 
         self.add_simulacion_tab("Simulación 1")
+        self.add_plus_tab()
+        self.sim_count = 1  # Contador de simulaciones
 
         self.widget_parameter_panel() 
 
+        self.monitor_tab_change()
+
     
+    def add_plus_tab(self):
+        # Añadir pestaña "+" si no existe
+        if "+" not in self.tabview._tab_dict:
+            self.tabview.add("+")
+
+    def monitor_tab_change(self):
+        selected = self.tabview.get()
+        if selected == "+" and self.current_tab != "+":
+            self.sim_count += 1
+            new_tab_name = f"Simulación {self.sim_count}"
+            self.add_simulacion_tab(new_tab_name)
+            self.tabview.set(new_tab_name)
+        self.current_tab = selected
+        self.after(100, self.monitor_tab_change)
+
+    def on_add_tab_click(self, event=None):
+        # Cada vez que se pulsa el tab de "+"
+        self.sim_count += 1
+        nombre_sim = f"Simulación {self.sim_count}"
+        self.add_simulacion_tab(nombre_sim)
+        self.tabview.set(nombre_sim)  # Cambiar a la nueva pestaña
+
+
     def add_simulacion_tab(self, nombre_simulacion):
+        # Eliminar "+" temporalmente
+        if "+" in self.tabview._tab_dict:
+            self.tabview.delete("+")
+
         # Crear pestaña para esta simulación
-        sim_tab = self.tabview.add(nombre_simulacion)
+        self.tabview.add(nombre_simulacion)
+        inner_tab =  self.tabview.tab(nombre_simulacion)
+
+        sim_tab = ctk.CTkTabview(inner_tab, corner_radius=10)
+        sim_tab.pack(fill="both", expand=True, padx=10, pady=10)
 
        # Pestaña para el gráfico
         tab_grafico = sim_tab.add("Gráfico")
         grafico_area = ctk.CTkFrame(tab_grafico, height=250, corner_radius=10)
         grafico_area.pack(fill="both", expand=True, padx=10, pady=10)
         ctk.CTkLabel(grafico_area, text="(Gráfico aquí)", anchor="center").pack(expand=True)
-
+        self.graphic_list.append(grafico_area)  # Guardar referencia para actualizar el gráfico
+        
         # Pestaña para los resultados
         tab_resultados = sim_tab.add("Resultados")
-        text_frame = ctk.CTkFrame(self.tab_resultados, corner_radius=10)
+        text_frame = ctk.CTkFrame(tab_resultados, corner_radius=10)
         text_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
         textbox = ctk.CTkTextbox(text_frame, wrap="word")
         textbox.pack(fill="both", expand=True, padx=10, pady=10)
         textbox.insert("end", "Resultados de simulación...\n")
+        self.result_list.append(textbox)  # Guardar referencia para actualizar los resultados
+
+        self.add_plus_tab()  # Añadir de nuevo la pestaña "+" al final
 
 
 
@@ -117,31 +165,65 @@ class GUI_Simulation(ctk.CTkToplevel):
             "dt_tol": self.dt_tol.get()
         }
     
+    def get_result_text(self):
+        """
+        Obtiene el contenido visible del área de texto de resultados.
+        """
+        index_tab = self.tabview.get()
+        textbox = self.result_list[self.tabview.index(index_tab)]
+
+        textbox.configure(state="normal")
+        content = textbox.get("1.0", "end-1c")  # Obtener texto sin salto final
+        textbox.configure(state="disabled")
+
+        return content
+
+    def get_result_figure(self):
+        """
+        Obtiene el objeto Figure que está siendo mostrado en el área de gráficos.
+        """
+        index_tab = self.tabview.get()
+        fig = self.fig_list[self.tabview.index(index_tab)]
+    
+        return fig
+    
+    
     def update_result_terminal(self, result):
         """
         Actualiza el área de resultados con el resultado de la simulación.
         """
+        # Obtenemos el índice de la pestaña actual
+        index_tab = self.tabview.get()
+        # Obtenemos el textbox correspondiente a la pestaña actual
+        textbox = self.result_list[self.tabview.index(index_tab)]
 
-        self.textbox.configure(state="normal")  # Asegúrate de poder escribir
-        self.textbox.delete("1.0", "end")
+        textbox.configure(state="normal")  # Asegúrate de poder escribir
+        textbox.delete("1.0", "end")
 
         # Encabezado (primera fila)
         header = "\t".join(map(str, result[0])) + "\n"
-        self.textbox.insert("end", header)
-        self.textbox.insert("end", "-" * 60 + "\n")
+        textbox.insert("end", header)
+        textbox.insert("end", "-" * 60 + "\n")
 
         # Filas con formato numérico
         for row in result[1:]:
             formatted = "\t".join(f"{float(x):.4f}" for x in row)
-            self.textbox.insert("end", formatted + "\n")
+            textbox.insert("end", formatted + "\n")
 
-        self.textbox.see("end")
-        self.textbox.configure(state="disabled")  # Bloquear edición
+        textbox.see("end")
+        textbox.configure(state="disabled")  # Bloquear edición
+
+   
 
     def update_result_plot(self, result):
         """
         Actualiza el área de resultados con el resultado de la simulación.
         """
+        # Obtenemos el índice de la pestaña actual
+        index_tab = self.tabview.get()
+        # Obtenemos el área de gráfico correspondiente a la pestaña actual
+        grafico_area = self.graphic_list[self.tabview.index(index_tab)]
+
         # Encabezado
         header = result[0]  
         
@@ -169,10 +251,16 @@ class GUI_Simulation(ctk.CTkToplevel):
         ax.grid(True)
 
         # Limpiar área del gráfico
-        for widget in self.grafico_area.winfo_children():
+        for widget in grafico_area.winfo_children():
             widget.destroy()
 
+        #Comprobamos si el indice de la lista de figuras es menor que el índice de la pestaña actual
+        if len(self.fig_list) <= self.tabview.index(index_tab):
+            self.fig_list.append(fig)
+        else:
+            self.fig_list[self.tabview.index(index_tab)] = fig
+        
         # Mostrar gráfico
-        canvas = FigureCanvasTkAgg(fig, master=self.grafico_area)
+        canvas = FigureCanvasTkAgg(fig, master=grafico_area)
         canvas.draw()
         canvas.get_tk_widget().pack(fill="both", expand=True)

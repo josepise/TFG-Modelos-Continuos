@@ -381,6 +381,7 @@ class GeneratorController:
 
         return True
 
+
     def compile(self):
 
         #Comprobamos si hay errores en la generación del archivo de salida
@@ -420,6 +421,7 @@ class GeneratorController:
         time_args=view_simulation.get_time_args()                              #Obtenemos los argumentos de tiempo de la vista
 
         args+=f"{time_args['t0']} {time_args['tf']} {time_args['dt_tol']} "
+        self.model.set_time_range([time_args['t0'], time_args['tf'], time_args['dt_tol']])  #Establece los argumentos de tiempo en el modelo
 
         self.model.execute_simulation(args)                                           #Ejecuta el archivo de salida con los argumentos de entrada y tiempo
 
@@ -430,6 +432,29 @@ class GeneratorController:
         
         view_simulation.update_result_terminal(data)
         view_simulation.update_result_plot(data)     
+
+    def export_pdf(self):
+        
+        view=self.view.get_simulation_view() 
+
+        #Obtenemos la figura y los datos de la vista de simulación
+        figure = view.get_result_figure()  
+        data = view.get_result_text()  
+        
+        #Obtenemos los argumentos de entrada de la vista
+        entry_args=view.get_entries_args()                          
+
+        #Creamos la cadena de argumentos para la exportación del PDF
+        args = {}
+        for i in self.model.get_constants():
+            args[i] = entry_args[i].get()  #Obtenemos los valores de las constantes
+
+        for i in self.model.get_var_identifiers():
+            args[i] = entry_args[i].get()
+
+
+        #Exportamos el PDF con los datos y la figura
+        self.model.export_pdf(data, figure, args)
 
     def toggle_frame(self, mode:str=None ,option:str=None, selected:str=None):
         frame_width = self.view.aux_frame.winfo_width()  #Obtenemos el ancho del frame auxiliar

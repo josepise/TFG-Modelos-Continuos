@@ -1,6 +1,15 @@
 from .translators import (python_translator, cpp_translator, java_translator, translator)
 from .equation import Equation
 from .conditions import Condition
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from reportlab.lib.utils import ImageReader
+from reportlab.lib import colors
+from reportlab.platypus import Table, TableStyle, SimpleDocTemplate, Spacer, Image
+from reportlab.lib.units import inch
+from reportlab.platypus import Paragraph
+from reportlab.lib.styles import getSampleStyleSheet
+import tempfile
 
 import yaml, os
 
@@ -173,7 +182,6 @@ class ContinuousModelGenerator:
         Establece el rango de tiempo.
         """
         self.time_range = time_range
-        self.translator.set_time_range(time_range)
     
     def set_file_name(self, file_name):
         """
@@ -380,8 +388,7 @@ class ContinuousModelGenerator:
         # Comprobar que los nombres de las ecuaciones están en get_var_identifiers
         equation_names = [str(eq.get_name()) for eq in self.get_equations()]
         symbols = list(set([str(symbol) for eq in self.get_equations() for symbol in eq.get_symbol()]))
-        print(symbols) 
-        print(equation_names)
+       
         missing_names = [name for name in equation_names if name not in symbols]
         if missing_names:
             return ("GENERATION_FAILED_MISSING_VARS", missing_names)
@@ -412,6 +419,118 @@ class ContinuousModelGenerator:
             content = [line.strip().split() for line in lines]
         
         return content
+    
+    def export_pdf(self, text, fig, params, filename="resultado_exportado.pdf"):
+        # Crear documento PDF
+        doc = SimpleDocTemplate(filename, pagesize=letter)
+        elementos = []
+
+        style_table = TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.gray),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTNAME', (0, 1), (-1, -1), 'Courier'),
+            ('FONTSIZE', (0, 0), (-1, -1), 8),
+            ('GRID', (0, 0), (-1, -1), 0.25, colors.black),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 6),
+        ])
+
+        #Título
+        estilos = getSampleStyleSheet()
+        titulo = Paragraph("Resultados de la Simulación", estilos["Title"])
+        elementos.append(titulo)
+        elementos.append(Spacer(1, 12))
+
+        # Añadimos características de la simulación
+        
+        #Tipo de traductor
+        tipo_traductor = Paragraph(f"<b>Tipo de Traductor:</b> {self.translator_type.capitalize()}", estilos["Normal"])
+        elementos.append(tipo_traductor)
+        elementos.append(Spacer(1, 12))
+
+        #Método numérico
+        metodo = Paragraph(f"<b>Método Numérico:</b> {self.method.capitalize()}", estilos["Normal"])
+        elementos.append(metodo)
+        elementos.append(Spacer(1, 12))
+
+        #Intervalos de tiempo
+        tiempo = Paragraph(f"<b>Rango de Tiempo:</b> {self.time_range[0]} a {self.time_range[1]} con paso de {self.time_range[2]}", estilos["Normal"])
+        elementos.append(tiempo)
+        elementos.append(Spacer(1, 12))
+    
+        #Valores de los parámetros y variables
+        parametros = Paragraph("<b>Parámetros y Variables:</b>", estilos["Normal"])
+        elementos.append(parametros)
+        elementos.append(Spacer(1, 12))
+        
+        #Añadir tabla con Nombre del parámetro y valor
+        rows = []
+        rows.append(["Nombre", "Valor"])
+        for param, value in params.items():
+            rows.append([param, value])
+        tabla_parametros = Table(rows, colWidths=[2*inch, 3*inch])
+        tabla_parametros.setStyle(style_table)
+        elementos.append(tabla_parametros)
+        elementos.append(Spacer(1, 12))
+
+        # Añadir tabla de ecuaciones
+        ecuaciones = Paragraph("<b>Ecuaciones:</b>", estilos["Normal"])
+        elementos.append(ecuaciones)
+        elementos.append(Spacer(1, 12))
+        rows = []
+        rows.append(["Ecuación"])
+        for eq in self.get_equations():
+            rows.append([eq.get_text_equation()])
+        tabla_ecuaciones = Table(rows, colWidths=[5*inch])
+        tabla_ecuaciones.setStyle(style_table)
+        elementos.append(tabla_ecuaciones)
+        elementos.append(Spacer(1, 12))
+
+        # Añadir tabla de condiciones
+        if len(self.get_conditions()) > 0:
+            condiciones = Paragraph("<b>Condiciones:</b>", estilos["Normal"])
+            elementos.append(condiciones)
+            elementos.append(Spacer(1, 12))
+            rows = []
+            rows.append(["Condición", "Acción"])
+            for cond in self.get_conditions():
+                rows.append([cond.get_text_condition(), cond.get_text_result()])
+            tabla_condiciones = Table(rows, colWidths=[3*inch, 2*inch])
+            tabla_condiciones.setStyle(style_table)
+            elementos.append(tabla_condiciones)
+            elementos.append(Spacer(1, 12))
+            
+        #Guardar imagen del gráfico temporalmente
+        temp_img = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
+        fig.savefig(temp_img.name, dpi=300, bbox_inches="tight")
+
+        #Insertar gráfico
+        imagen = Image(temp_img.name, width=5*inch, height=3*inch)
+        elementos.append(imagen)
+        elementos.append(Spacer(1, 20))
+
+        # Reemplazar ' ' por tabulaciones
+        text = text.replace(' ', '\t')
+
+        # Eliminamos la segunda linea que contiene guiones y añadimos 
+        lines = text.strip().split('\n')      
+        text = '\n'.join([lines[0]] + lines[2:])
+
+        rows = [line.strip().split('\t') for line in text.strip().split('\n') if line.strip()]
+        
+
+        # Tabla formateada
+        tabla = Table(rows,colWidths=[1.5*inch]*len(rows[0]))
+        tabla.setStyle(style_table)
+
+        elementos.append(tabla)
+
+        # 4. Guardar el PDF
+        doc.build(elementos)
+
+        print(f"PDF exportado correctamente como {filename}")
+
 
     def save_config(self, file_path):
         """

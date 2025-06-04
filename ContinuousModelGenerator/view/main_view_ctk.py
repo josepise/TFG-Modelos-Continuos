@@ -15,7 +15,7 @@ class GUI_CTK:
 
         self.route_img = os.path.join("ContinuousModelGenerator", "resources", "img")
         self.controller = controller
-        #ECEDF1
+
         # Colores de la interfaz
         self.color_window = "#031240"
         self.color_bg = "#352F6B"
@@ -34,11 +34,18 @@ class GUI_CTK:
         self.window = ctk.CTk()
         self.window.geometry(f"{self.screen_width}x{int(self.screen_height)}")
         self.window.configure(fg_color=self.color_bg)
-        # self.window.resizable(False, False)
+        self.window.resizable(False, False)
         # self.window.overrideredirect(True)
 
         self.load_imgs()
-        self.window.iconbitmap(self.resource_path("ContinuousModelGenerator/resources/img/icon.ico"))
+
+        # #Comprobamos si estamos en windows o en linux
+        # if sys.platform.startswith('win'):
+        #     path_ico = self.resource_path("ContinuousModelGenerator/resources/img/icon.ico")
+        # else:
+        #     path_ico = self.resource_path("ContinuousModelGenerator/resources/img/icon.png")
+
+        # self.window.iconbitmap(path_ico)
         self.create_widgets()
 
     def init_sim_view(self):
@@ -159,7 +166,7 @@ class GUI_CTK:
         self.file_menu_var = ctk.StringVar()
         self.file_menu_segmented = ctk.CTkSegmentedButton(
             self.menu_frame,
-            values=["🆕 Nuevo", "📂 Abrir", "💾 Guardar", "❌ Salir"],
+            values=["Nuevo", "Abrir", "Guardar", "Salir"],
             command=self.handle_file_menu_action,
             variable=self.file_menu_var
         )
@@ -167,16 +174,16 @@ class GUI_CTK:
 
 
     def handle_file_menu_action(self, action):
-        if action == "🆕 Nuevo":
+        if action == "Nuevo":
             self.controller.new_file()
             self.file_menu_segmented.configure(variable=ctk.StringVar())
-        elif action == "📂 Abrir":
+        elif action == "Abrir":
             self.open_config_file()
             self.file_menu_segmented.configure(variable=ctk.StringVar())
-        elif action == "💾 Guardar":
+        elif action == "Guardar":
             self.save_config_file()
             self.file_menu_segmented.configure(variable=ctk.StringVar())
-        elif action == "❌ Salir":
+        elif action == "Salir":
             self.window.destroy()
 
     def show_view_menu(self):
@@ -388,8 +395,18 @@ class GUI_CTK:
     def generate_program(self):
         success = self.controller.check_generator()
 
+        # Obtener el lenguaje seleccionado desde el desplegable
+        selected_lang = self.dropdown_lang.get()
+
+        if selected_lang == "python":
+            file_types = [("Python files", "*.py")]
+        elif selected_lang == "cpp":
+            file_types = [("C++ files", "*.cpp")]
+        elif selected_lang == "java":
+            file_types = [("Java files", "*.java")]
+
         if success:
-            ruta_completa = filedialog.asksaveasfilename(title="Generar programa")
+            ruta_completa = filedialog.asksaveasfilename(filetypes=file_types,title="Generar programa")
             if ruta_completa:
                 ruta, nombre = os.path.split(ruta_completa)
                 self.controller.generate(ruta, nombre)
