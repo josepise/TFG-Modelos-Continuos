@@ -4,16 +4,14 @@ datas = [
     ('ContinuousModelGenerator/resources/img/add_1.png', 'ContinuousModelGenerator/resources/img'),
     ('ContinuousModelGenerator/resources/img/edit_1.png', 'ContinuousModelGenerator/resources/img'),
     ('ContinuousModelGenerator/resources/img/delete_1.png', 'ContinuousModelGenerator/resources/img'),
-    ('ContinuousModelGenerator/resources/img/icon.ico', 'ContinuousModelGenerator/resources/img'),
-    ('ContinuousModelGenerator/resources/img/icon.png', 'ContinuousModelGenerator/resources/img'),
 ]
 
 a = Analysis(
-    ['test_ui.py'],
+    ['ContinuousModelGenerator/generator.py'],
     pathex=[],
     binaries=[],
     datas=datas,
-    hiddenimports=['PIL._tkinter_finder'],
+    hiddenimports=['PIL._tkinter_finder','reportlab'],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
@@ -29,7 +27,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='test_ui',
+    name='GeneratorSimulator',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

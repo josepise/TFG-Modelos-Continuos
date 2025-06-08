@@ -12,6 +12,7 @@ class GUI_Simulation(ctk.CTkToplevel):
         self.title("Simulación")
         self.geometry("1200x650")
         self.resizable(False, False)
+
         
         self.graphic_list = []  # Lista para almacenar frames de gráficos
         self.result_list = []  # Lista para almacenar frames de resultados
@@ -20,6 +21,14 @@ class GUI_Simulation(ctk.CTkToplevel):
         # === PANEL DE CONTROLES IZQUIERDO ===
         self.control_frame = ctk.CTkFrame(self, width=250, corner_radius=15)
         self.control_frame.pack(side="left", fill="y", padx=10, pady=10)
+        
+        log_frame = ctk.CTkFrame(self, fg_color="#FFFFFF", corner_radius=18, height=25)
+        log_frame.pack(side="bottom", anchor="s", fill="x",pady=10, padx=10)
+        log_label = ctk.CTkLabel(log_frame, text="", text_color="red", anchor="w", justify="left")
+        log_label.pack(side="left", anchor="w", padx=5, pady=5)
+
+        #Mientras que la ventana tenga el foco, se actualiza el label de errores
+        self.bind("<FocusIn>",lambda event: self.controller.set_log_label(log_label))
 
         ctk.CTkLabel(self.control_frame, text="Tiempo inicial:", width=130).pack(pady=(20, 5))
         self.tiempo_inicio = ctk.CTkEntry(self.control_frame, placeholder_text="Ej: 0.0",width=120)

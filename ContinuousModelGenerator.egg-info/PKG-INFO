@@ -11,6 +11,7 @@ Requires-Dist: Pillow==11.2.1
 Requires-Dist: PyYAML==6.0.2
 Requires-Dist: setuptools>=59.6.0
 Requires-Dist: sympy==1.14.0
+Requires-Dist: reportlab==4.4.1
 Dynamic: author
 Dynamic: author-email
 Dynamic: home-page

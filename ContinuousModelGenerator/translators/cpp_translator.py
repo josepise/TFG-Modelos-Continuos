@@ -1,6 +1,7 @@
 from .translator import SimulationModelGenerator
 import sympy as sp
 import re
+import subprocess
 import os
 
 class CppSimulationGenerator(SimulationModelGenerator):
@@ -362,14 +363,17 @@ class CppSimulationGenerator(SimulationModelGenerator):
         self.file.write("}\n\n")
     
     def compile(self):
-        os.system(f"g++ -o {self.path_file}/{self.name_file} {self.path_file}/{self.name_file}.cpp -std=c++11 -static-libgcc -static-libstdc++")
+        command=f"g++ -o {self.path_file}/{self.name_file} {self.path_file}/{self.name_file}.cpp -std=c++11 -static-libgcc -static-libstdc++"
+        subprocess.run(command, creationflags=subprocess.CREATE_NO_WINDOW)
 
     def run(self, args):
 
         #Comprobamos si es windows o linux para ejecutar el comando
         if os.name == 'nt':
-            os.system(f"{self.path_file}/{self.name_file}.exe {args}")
-            print(f"Ejecutando el programa: {self.path_file}\\{self.name_file}.exe {args}")
+            command=f"{self.path_file}/{self.name_file}.exe {args}"
         elif os.name == 'posix':
-            os.system(f"{self.path_file}/{self.name_file} {args}")
+            command=f"{self.path_file}/{self.name_file} {args}"
+
+        subprocess.run(command, creationflags=subprocess.CREATE_NO_WINDOW)
+        
 

@@ -203,10 +203,20 @@ class GeneratorController:
     def edit_condition(self, text_exp:str, text_act:str, text_var:str, text_constant:str, name:str):
         name = name.replace("Condicion_", "")
         index = int(name) - 1
+        success = True
 
         text_exp, text_act, text_var, constants = self.prepare_condition(text_exp, text_act, text_var, text_constant)
 
-        self.model.edit_condition(text_exp,text_act,text_var,constants, index)
+        if text_exp != None and text_act != None and text_var != None and constants != None:
+            self.model.edit_condition(text_exp,text_act,text_var,constants, index)
+            self.log_handler.show_success_prm("SUCCESS_EDIT_CONDITION", name)
+            success =True
+        else:
+            success = False
+        
+        return success
+
+
 
     def delete_equation(self, name:str):
         """
@@ -421,13 +431,41 @@ class GeneratorController:
         entry_args=view_simulation.get_entries_args()                          #Obtenemos los argumentos de entrada de la vista
 
         for i in self.model.get_constants():
-            args+= f"{entry_args[i].get()} "
+            #Comprobamos si la entrada es un número y no está vacia
+            if entry_args[i].get() != "" and re.match(r'^-?\d+(\.\d+)?$', entry_args[i].get()):  
+                #Añadimos la constante a los argumentos
+                args+= f"{entry_args[i].get()} "
+            else:
+                #Mostramos el error en la vista
+                self.log_handler.show_error_prm("INVALID_SIM_ENTRY", i)
+                return None
 
         for i in self.model.get_var_identifiers():
-            args+=f"{entry_args[i].get()} "
+            #Comprobamos si la entrada es un número y no está vacia
+            if entry_args[i].get() != "" and re.match(r'^-?\d+(\.\d+)?$', entry_args[i].get()):  
+                #Añadimos la constante a los argumentos
+                args+= f"{entry_args[i].get()} "
+            else:
+                #Mostramos el error en la vista
+                self.log_handler.show_error_prm("INVALID_SIM_ENTRY", i)
+                return None
 
 
         time_args=view_simulation.get_time_args()                              #Obtenemos los argumentos de tiempo de la vista
+
+        #Comprobamos si los argumentos de tiempo son válidos de uno en uno
+        if not re.match(r'^-?\d+(\.\d+)?$', time_args['t0']) or time_args['t0'] == "" \
+            or float(time_args['t0']) < 0:
+            self.log_handler.show_error_prm("INVALID_SIM_ENTRY", "Tiempo inicial")
+            return None
+        if not re.match(r'^-?\d+(\.\d+)?$', time_args['tf']) or time_args['tf'] == "" \
+            or float(time_args['tf']) <= 0:
+            self.log_handler.show_error_prm("INVALID_SIM_ENTRY", "Tiempo final")
+            return None
+        if not re.match(r'^-?\d+(\.\d+)?$', time_args['dt_tol']) or time_args['dt_tol'] == "" \
+            or float(time_args['dt_tol']) <= 0:
+            self.log_handler.show_error_prm("INVALID_SIM_ENTRY", "Paso de integración/Tolerancia") 
+            return None
 
         args+=f"{time_args['t0']} {time_args['tf']} {time_args['dt_tol']} "
         self.model.set_time_range([time_args['t0'], time_args['tf'], time_args['dt_tol']])  #Establece los argumentos de tiempo en el modelo
@@ -440,7 +478,9 @@ class GeneratorController:
         data = self.model.get_output_simulation_file(f"{name_file}_output_{translator_type}.csv")  # Obtenemos el archivo de salida
         
         view_simulation.update_result_terminal(data)
-        view_simulation.update_result_plot(data)     
+        view_simulation.update_result_plot(data) 
+
+        self.log_handler.show_success("EXECUTION_SUCCESS")  #Muestra el mensaje de éxito en la vista    
 
     def export_pdf(self):
         
@@ -463,7 +503,10 @@ class GeneratorController:
 
 
         #Exportamos el PDF con los datos y la figura
-        self.model.export_pdf(data, figure, args)
+        name_file = f"{self.model.get_file_name()}_export.pdf"
+        self.model.export_pdf(data, figure, args, name_file)
+
+        self.log_handler.show_success_prm("SUCCESS_EXPORT", name_file)  #Muestra el mensaje de éxito en la vista
 
     def toggle_frame(self, mode:str=None ,option:str=None, selected:str=None):
         frame_width = self.view.aux_frame.winfo_width()  #Obtenemos el ancho del frame auxiliar
@@ -510,10 +553,16 @@ class GeneratorController:
         self.view.update_dropdown_equation(self.get_list_equations())            
         self.view.update_dropdown_lang(self.get_list_languages(),self.model.get_translator_type())          
         self.view.update_dropdown_output(self.get_list_output(),self.model.get_output())            
-        self.view.update_dropdown_method(self.get_list_methods(),self.model.get_method())           
+        self.view.update_dropdown_method(self.get_list_methods(),self.model.get_method())    
+
+        #Muestra el mensaje de éxito en la vista 
+        self.log_handler.show_success_prm("CONFIG_LOADED", file_path)       
 
     def save_config(self, file_path:str):
-        self.model.save_config(file_path)                    
+        self.model.save_config(file_path)
+
+        #Muestra el mensaje de éxito en la vista
+        self.log_handler.show_success_prm("CONFIG_SAVED", file_path)                    
 
 
     

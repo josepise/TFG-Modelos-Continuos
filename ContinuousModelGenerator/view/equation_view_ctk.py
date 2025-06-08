@@ -1,5 +1,3 @@
-
-from tkinter import Frame, Button, Canvas, Entry
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from functools import partial
@@ -18,11 +16,8 @@ class GUI_Equation():
         self.placeholder_constants = "a, b, c"
 
         # Colores de la interfaz
-        self.color_window = "#031240"
         self.color_bg = "#352F6B"
         self.color_text = "#3B52D9"
-        self.color_button_drop = "#233559"
-        self.color_dropdown = "#F2F2F2"
         self.color_aux = "#4A6DD9"
 
         # Limpiar el frame antes de crear nuevos elementos
@@ -158,12 +153,28 @@ class GUI_Equation():
             self.load_data()
 
     def add_equation(self, text_equation, text_var, text_constants):
+        if text_equation == self.placeholder_equation:
+            text_equation = ""
+        if text_var == self.placeholder_var:
+            text_var = ""
+        if text_constants == self.placeholder_constants:
+            text_constants = ""
+        
+
         success=self.controler.add_equation(text_equation, text_var, text_constants)
         
         if success:
             self.clear_entries()
 
     def edit_equation(self, text_equation, text_var, text_constants):
+        if text_equation == self.placeholder_equation:
+            text_equation = ""
+        if text_var == self.placeholder_var:
+            text_var = ""
+        if text_constants == self.placeholder_constants:
+            text_constants = ""
+        
+
         success=self.controler.edit_equation(text_equation, text_var, text_constants, self.selected)
         
         if success:

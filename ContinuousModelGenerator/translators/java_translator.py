@@ -1,5 +1,6 @@
 from .translator import SimulationModelGenerator
 import os
+import subprocess
 import re
 import sympy as sp
 
@@ -335,10 +336,13 @@ class JavaSimulationGenerator(SimulationModelGenerator):
         self.file.write("}\n")
 
     def compile(self):
-        os.system(f"javac {self.path_file}/{self.name_file}.java")
+        command =f"javac {self.path_file}/{self.name_file}.java"
+        subprocess.run(command, creationflags=subprocess.CREATE_NO_WINDOW)
+       
 
     def run(self,args=None):
-        os.system(f"java -cp {self.path_file} {self.name_file} \
-                 {args} ")
-        print(f"java -cp {self.path_file} {self.name_file} \
-                 {args} ")
+        command=f"java -cp {self.path_file} {self.name_file} \
+                 {args} "
+        
+        subprocess.run(command, creationflags=subprocess.CREATE_NO_WINDOW)
+        

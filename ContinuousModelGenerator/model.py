@@ -2,8 +2,6 @@ from .translators import (python_translator, cpp_translator, java_translator, tr
 from .equation import Equation
 from .conditions import Condition
 from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
-from reportlab.lib.utils import ImageReader
 from reportlab.lib import colors
 from reportlab.platypus import Table, TableStyle, SimpleDocTemplate, Spacer, Image
 from reportlab.lib.units import inch

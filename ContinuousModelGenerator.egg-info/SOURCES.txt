@@ -4,6 +4,7 @@ ContinuousModelGenerator/__init__.py
 ContinuousModelGenerator/conditions.py
 ContinuousModelGenerator/controller.py
 ContinuousModelGenerator/equation.py
+ContinuousModelGenerator/generator.py
 ContinuousModelGenerator/log_codes.py
 ContinuousModelGenerator/log_handler.py
 ContinuousModelGenerator/model.py
@@ -12,7 +13,13 @@ ContinuousModelGenerator.egg-info/SOURCES.txt
 ContinuousModelGenerator.egg-info/dependency_links.txt
 ContinuousModelGenerator.egg-info/requires.txt
 ContinuousModelGenerator.egg-info/top_level.txt
+ContinuousModelGenerator/translators/__init__.py
 ContinuousModelGenerator/translators/cpp_translator.py
+ContinuousModelGenerator/translators/java_translator.py
 ContinuousModelGenerator/translators/python_translator.py
 ContinuousModelGenerator/translators/translator.py
-test/test_ui.py
+ContinuousModelGenerator/view/__init__.py
+ContinuousModelGenerator/view/condition_view_ctk.py
+ContinuousModelGenerator/view/equation_view_ctk.py
+ContinuousModelGenerator/view/main_view_ctk.py
+ContinuousModelGenerator/view/simulation_view.py

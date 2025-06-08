@@ -1,5 +1,6 @@
 from .translator import SimulationModelGenerator
 import sympy as sp
+import subprocess
 import os
 
 class PythonSimulationGenerator(SimulationModelGenerator):
@@ -349,7 +350,6 @@ class PythonSimulationGenerator(SimulationModelGenerator):
         pass
 
     def run(self, args=None):
-    
-        # Run the Python script with the required arguments
-        os.system(f"python {self.path_file}/{self.name_file}.py \
-                 {args} ")
+        command =f"python {self.path_file}/{self.name_file}.py \
+                  {args} "
+        subprocess.run(command, creationflags=subprocess.CREATE_NO_WINDOW)

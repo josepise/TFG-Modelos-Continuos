@@ -32,20 +32,13 @@ class GUI_CTK:
         root.destroy()  # Destruir la ventana raíz después de obtener la resolución
 
         self.window = ctk.CTk()
+        self.window.title("Generador de Programas de Simulación Continua")
         self.window.geometry(f"{self.screen_width}x{int(self.screen_height)}")
         self.window.configure(fg_color=self.color_bg)
         self.window.resizable(False, False)
-        # self.window.overrideredirect(True)
 
         self.load_imgs()
 
-        # #Comprobamos si estamos en windows o en linux
-        # if sys.platform.startswith('win'):
-        #     path_ico = self.resource_path("ContinuousModelGenerator/resources/img/icon.ico")
-        # else:
-        #     path_ico = self.resource_path("ContinuousModelGenerator/resources/img/icon.png")
-
-        # self.window.iconbitmap(path_ico)
         self.create_widgets()
 
     def init_sim_view(self):
@@ -68,7 +61,6 @@ class GUI_CTK:
         self.add_img = CTkImage(light_image=Image.open(self.resource_path("ContinuousModelGenerator/resources/img/add_1.png")), size=(20, 20))
         self.edit_img = CTkImage(light_image=Image.open(self.resource_path("ContinuousModelGenerator/resources/img/edit_1.png")), size=(20, 20))
         self.delete_img = CTkImage(light_image=Image.open(self.resource_path("ContinuousModelGenerator/resources/img/delete_1.png")), size=(20, 20))
-        self.icon = CTkImage(light_image=Image.open(self.resource_path("ContinuousModelGenerator/resources/img/icon.ico")), size=(20, 20))
         
 
     def create_widgets(self):
@@ -78,7 +70,9 @@ class GUI_CTK:
         log_frame.pack(side="bottom", anchor="s", fill="x",pady=15, padx=15)
         log_label = ctk.CTkLabel(log_frame, text="", text_color="red", anchor="w", justify="left")
         log_label.pack(side="left", anchor="w", padx=5, pady=5)
-        self.controller.set_log_label(log_label)
+
+        #Mientras que la ventana tenga el foco, se actualiza el label de errores
+        self.window.bind("<FocusIn>",lambda event: self.controller.set_log_label(log_label))
 
         self.top_menu()
 
@@ -91,18 +85,19 @@ class GUI_CTK:
         self.button_frame = ctk.CTkFrame(self.window, fg_color="transparent", corner_radius=0, height=50)
         self.button_frame.pack(side="bottom", anchor="center", fill="x")
 
-        self.generate_button = ctk.CTkButton(
-            self.button_frame, text="Generar", command=self.generate_program, width=100, height=40
-   
-        )
-        self.generate_button.pack(side="left", padx=15 ,pady=10)
-
         self.simulate_button = ctk.CTkButton(
             self.button_frame, text="Simular", command=self.init_sim_view, width=100, height=40, 
             text_color=self.color_aux, hover_color="#0A4F7D",fg_color="#555555",state="disabled"
         )
-        self.simulate_button.pack(side="left", padx=10 ,pady=10)
+        self.simulate_button.pack(side="right", padx=10 ,pady=10)
 
+        self.generate_button = ctk.CTkButton(
+            self.button_frame, text="Generar", command=self.generate_program, width=100, height=40
+   
+        )
+        self.generate_button.pack(side="right", padx=15 ,pady=10)
+
+       
     def create_main_frame(self):
         self.main_frame = ctk.CTkFrame(self.window, corner_radius=15)
         self.main_frame.pack(anchor="center", fill="both", padx=15, pady=15, expand=True)
@@ -392,14 +387,7 @@ class GUI_CTK:
                 ruta, nombre = os.path.split(ruta_completa)
                 self.controller.generate(ruta, nombre)
 
-    def start_move(self, event):
-        self.offset_x = event.x
-        self.offset_y = event.y
-    
-    def do_move(self, event):
-        x = self.window.winfo_pointerx() - self.offset_x
-        y = self.window.winfo_pointery() - self.offset_y
-        self.window.geometry(f"+{x}+{y}")
+
 
    
     def show_frame(self, width, function,option, selected=None):

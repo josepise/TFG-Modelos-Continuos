@@ -13,5 +13,10 @@ setup(
     description="Generador de modelos continuos para simulaciones",
     author="Jose Pineda",
     author_email="jose.pineda.serrano@gmail.com",
-    url="https://github.com/josepise/TFG-Modelos-Continuos",  
+    url="https://github.com/josepise/TFG-Modelos-Continuos"  
+    # entry_points={
+    #     'console_scripts': [
+    #         'cmg = ContinuousModelGenerator.generator:main'
+    #     ]
+    # }
 )

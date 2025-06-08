@@ -8,10 +8,10 @@ class GUI_Condition:
         self.mode = mode
 
         # Placeholder para los campos de entrada
-        self.placeholder_condition = "x > 0, y < 10, z == 5"
+        self.placeholder_condition = "x + u_th > 0, y+v_th < 10, z == 5"
         self.placeholder_action = "u_th = 1, v_th = 2, w_th = 3"
         self.placeholder_var = "x, y, z"
-        self.placeholder_constants = "u_th, v_th, w_th"
+        self.placeholder_constants = "u_th, v_th"
 
 
         # Colores de la interfaz
@@ -185,23 +185,48 @@ class GUI_Condition:
             )
 
     def add_condition(self, text_logic_exp, text_action, text_var, text_constants):
+        if text_logic_exp == self.placeholder_condition:
+              text_logic_exp = ""
+        if text_action == self.placeholder_action:
+              text_action = ""
+        if text_var == self.placeholder_var:
+                text_var = ""
+        if text_constants == self.placeholder_constants:
+                text_constants = ""
+           
+
         success=self.controller.add_condition(text_logic_exp, text_action, text_var, text_constants)
         
         if success: 
             self.controller.toggle_frame()
 
     def edit_condition(self, text_logic_exp, text_action, text_var, text_constants):
-        success=self.controller.edit_condition(text_logic_exp, text_action, text_var, text_constants, self.selected)
+        if text_logic_exp == self.placeholder_condition:
+              text_logic_exp = ""
+        if text_action == self.placeholder_action:
+              text_action = ""
+        if text_var == self.placeholder_var:
+                text_var = ""
+        if text_constants == self.placeholder_constants:
+                text_constants = ""
+
+        success=self.controller.edit_condition(text_logic_exp, text_action, text_var, text_constants, 
+                                               self.selected)
         
         if success:
             self.controller.toggle_frame()
+        else:
+            print("Error al editar la condición. Verifique los datos ingresados.")
 
     def load_data(self):
         str_cond, str_act, list_sym, list_const = self.controller.get_condition(self.selected)
-
+        self.text_entry_condition.delete("1.0", "end")
         self.text_entry_condition.insert("1.0", str_cond)
+        self.text_entry_action.delete("1.0", "end")
         self.text_entry_action.insert("1.0", str_act)
+        self.text_entry_var.delete("1.0", "end")
         self.text_entry_var.insert("1.0", list_sym)
+        self.text_entry_constants.delete("1.0", "end")
         self.text_entry_constants.insert("1.0", list_const)
 
     def preview_condition(self):
