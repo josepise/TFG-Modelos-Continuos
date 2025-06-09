@@ -1,3 +1,4 @@
+import subprocess
 from .translators import (python_translator, cpp_translator, java_translator, translator)
 from .equation import Equation
 from .conditions import Condition
@@ -7,6 +8,7 @@ from reportlab.platypus import Table, TableStyle, SimpleDocTemplate, Spacer, Ima
 from reportlab.lib.units import inch
 from reportlab.platypus import Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
+import importlib.util
 import tempfile
 
 import yaml, os
@@ -368,7 +370,22 @@ class ContinuousModelGenerator:
             exit_code = os.system(f"{command} {dict_commands[command]} >nul 2>&1")
             if exit_code != 0:
                 missing_commands += f"{command} "
-        
+
+        # Comprobar si numpy está instalado
+        if self.translator_type=="python":
+            try:
+                result = subprocess.run(
+                    ["pip", "show", "numpy"],
+                    capture_output=True, text=True, check=True
+                )
+                
+                if "Name: numpy" in result.stdout:
+                    return True
+                else:
+                    missing_commands += "numpy "
+            except subprocess.CalledProcessError:
+                missing_commands += "numpy "
+
         return missing_commands
         
 
