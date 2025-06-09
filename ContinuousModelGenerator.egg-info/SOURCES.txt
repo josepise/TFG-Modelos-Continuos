@@ -11,6 +11,7 @@ ContinuousModelGenerator/model.py
 ContinuousModelGenerator.egg-info/PKG-INFO
 ContinuousModelGenerator.egg-info/SOURCES.txt
 ContinuousModelGenerator.egg-info/dependency_links.txt
+ContinuousModelGenerator.egg-info/entry_points.txt
 ContinuousModelGenerator.egg-info/requires.txt
 ContinuousModelGenerator.egg-info/top_level.txt
 ContinuousModelGenerator/translators/__init__.py

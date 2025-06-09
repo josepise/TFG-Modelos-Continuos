@@ -41,7 +41,8 @@ class PythonSimulationGenerator(SimulationModelGenerator):
         if os.name == 'nt':
             self.file.write("# -*- mode: python ; coding: utf-8 -*-\n")
         self.file.write("import numpy as np\n")
-        self.file.write("import matplotlib.pyplot as plt\n")
+        if self.output != "csv":
+            self.file.write("import matplotlib.pyplot as plt\n")
         self.file.write("import sys\n")
         self.file.write("\n\n")
 

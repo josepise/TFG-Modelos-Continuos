@@ -7,21 +7,22 @@ class GUI_Simulation(ctk.CTkToplevel):
 
     def __init__(self,parent, controller):
         super().__init__(parent)
+        self.widget_parameter_panel_list={}
+        self.parametros_panel_list = {}  
         self.entries_args = {} 
+        self.t_ini_list = {}
+        self.t_fin_list = {}
+        self.dt_tol_list = {}
+
         self.controller = controller
         self.title("Simulación")
         self.geometry("1200x650")
         self.resizable(False, False)
 
-        
         self.graphic_list = []  # Lista para almacenar frames de gráficos
         self.result_list = []  # Lista para almacenar frames de resultados
         self.fig_list = []  # Lista para almacenar figuras de matplotlib
 
-        # === PANEL DE CONTROLES IZQUIERDO ===
-        self.control_frame = ctk.CTkFrame(self, width=250, corner_radius=15)
-        self.control_frame.pack(side="left", fill="y", padx=10, pady=10)
-        
         log_frame = ctk.CTkFrame(self, fg_color="#FFFFFF", corner_radius=18, height=25)
         log_frame.pack(side="bottom", anchor="s", fill="x",pady=10, padx=10)
         log_label = ctk.CTkLabel(log_frame, text="", text_color="red", anchor="w", justify="left")
@@ -30,43 +31,15 @@ class GUI_Simulation(ctk.CTkToplevel):
         #Mientras que la ventana tenga el foco, se actualiza el label de errores
         self.bind("<FocusIn>",lambda event: self.controller.set_log_label(log_label))
 
-        ctk.CTkLabel(self.control_frame, text="Tiempo inicial:", width=130).pack(pady=(20, 5))
-        self.tiempo_inicio = ctk.CTkEntry(self.control_frame, placeholder_text="Ej: 0.0",width=120)
-        self.tiempo_inicio.pack(pady=5)
-
-        ctk.CTkLabel(self.control_frame, text="Tiempo final:").pack(pady=(10, 5))
-        self.tiempo_fin = ctk.CTkEntry(self.control_frame, placeholder_text="Ej: 10.0",width=120)
-        self.tiempo_fin.pack(pady=5)
-
-        text = "Tolerancia:" if self.controller.model.method == "runge-kutta-fehlberg" else "Δt"
-        ctk.CTkLabel(self.control_frame, text=text).pack(pady=(10, 5))
-        self.dt_tol = ctk.CTkEntry(self.control_frame, placeholder_text="Ej: 0.01",width=120)
-        self.dt_tol.pack(pady=5)
-
-        self.toggle_menu_btn = ctk.CTkButton(self.control_frame, text="Parámetros", command=self.toggle_menu, width=120)
-        self.toggle_menu_btn.pack(pady=30)
-
-        self.toggle_menu_btn = ctk.CTkButton(self.control_frame, text="Simular", command=self.controller.execute, width=120)
-        self.toggle_menu_btn.pack(pady=30)
-
-
-        self.toggle_menu_btn = ctk.CTkButton(self.control_frame, text="Exportar PDF", command=self.controller.export_pdf, width=120)
-        self.toggle_menu_btn.pack(pady=30)
-
-        # === ÁREA CENTRAL PARA RESULTADOS ===
-        self.resultados_frame = ctk.CTkFrame(self, corner_radius=15)
-        self.resultados_frame.pack(side="left", fill="both", expand=True, padx=10, pady=10)
-
         # Crear un widget de pestañas
-        self.tabview = ctk.CTkTabview(self.resultados_frame, corner_radius=10)
+        self.tabview = ctk.CTkTabview(self, corner_radius=10)
         self.tabview.pack(fill="both", expand=True, padx=10, pady=10)
 
         self.add_simulacion_tab("Simulación 1")
         self.add_plus_tab()
         self.sim_count = 1  # Contador de simulaciones
 
-        self.widget_parameter_panel() 
-
+    
         self.monitor_tab_change()
 
     
@@ -93,17 +66,52 @@ class GUI_Simulation(ctk.CTkToplevel):
         self.tabview.set(nombre_sim)  # Cambiar a la nueva pestaña
 
 
-    def add_simulacion_tab(self, nombre_simulacion):
+    def add_simulacion_tab(self, name_tab):
         # Eliminar "+" temporalmente
         if "+" in self.tabview._tab_dict:
             self.tabview.delete("+")
+        
+        self.entries_args[name_tab] = {}  # Diccionario para almacenar entradas de parámetros
+        self.t_ini_list[name_tab] = {}
+        self.t_fin_list[name_tab] = {}
+        self.dt_tol_list[name_tab] = {}
 
         # Crear pestaña para esta simulación
-        self.tabview.add(nombre_simulacion)
-        inner_tab =  self.tabview.tab(nombre_simulacion)
+        self.tabview.add(name_tab)
+        inner_tab =  self.tabview.tab(name_tab)
 
-        sim_tab = ctk.CTkTabview(inner_tab, corner_radius=10)
+         # === PANEL DE CONTROLES IZQUIERDO ===
+        self.control_frame = ctk.CTkFrame(inner_tab, width=250, corner_radius=15)
+        self.control_frame.pack(side="left", fill="y", padx=10, pady=10)
+        
+        ctk.CTkLabel(self.control_frame, text="Tiempo inicial:", width=130).pack(pady=(20, 5))
+        self.t_ini_list[name_tab] = ctk.CTkEntry(self.control_frame, placeholder_text="Ej: 0.0",width=120)
+        self.t_ini_list[name_tab].pack(pady=5)
+
+        ctk.CTkLabel(self.control_frame, text="Tiempo final:").pack(pady=(10, 5))
+        self.t_fin_list[name_tab] = ctk.CTkEntry(self.control_frame, placeholder_text="Ej: 10.0",width=120)
+        self.t_fin_list[name_tab].pack(pady=5)
+
+        text = "Tolerancia:" if self.controller.model.method == "runge-kutta-fehlberg" else "Δt"
+        ctk.CTkLabel(self.control_frame, text=text).pack(pady=(10, 5))
+        self.dt_tol_list[name_tab] = ctk.CTkEntry(self.control_frame, placeholder_text="Ej: 0.01",width=120)
+        self.dt_tol_list[name_tab].pack(pady=5)
+
+        self.toggle_menu_btn = ctk.CTkButton(self.control_frame, text="Simular", command=self.controller.execute, width=120)
+        self.toggle_menu_btn.pack(pady=30)
+
+        self.toggle_menu_btn = ctk.CTkButton(self.control_frame, text="Exportar PDF", command=self.controller.export_pdf, width=120)
+        self.toggle_menu_btn.pack(pady=30)
+       
+        self.widget_parameter_panel(inner_tab, name_tab)
+
+         # === ÁREA CENTRAL PARA RESULTADOS ===
+        self.resultados_frame = ctk.CTkFrame(inner_tab, corner_radius=15)
+        self.resultados_frame.pack(side="left", fill="both", expand=True, padx=10, pady=10)
+
+        sim_tab = ctk.CTkTabview(self.resultados_frame, corner_radius=10)
         sim_tab.pack(fill="both", expand=True, padx=10, pady=10)
+
 
        # Pestaña para el gráfico
         tab_grafico = sim_tab.add("Gráfico")
@@ -123,20 +131,18 @@ class GUI_Simulation(ctk.CTkToplevel):
         self.result_list.append(textbox)  # Guardar referencia para actualizar los resultados
 
         self.add_plus_tab()  # Añadir de nuevo la pestaña "+" al final
+         
 
+    def widget_parameter_panel(self, frame, name_tab):
+        self.widget_parameter_panel_list[name_tab] = ctk.CTkFrame(frame, width=250, corner_radius=15)
+        self.widget_parameter_panel_list[name_tab].pack(side="right", fill="y", padx=10, pady=10)
 
-
-    def widget_parameter_panel(self):
-        self.parametros_panel = ctk.CTkFrame(self, width=250, corner_radius=15)
-        self.parametros_visible = False  # Estado inicial oculto
-
-        self.scroll = ctk.CTkScrollableFrame(self.parametros_panel, label_text="Parámetros y Condiciones Iniciales")
-        self.scroll.pack(fill="both", expand=True, padx=10, pady=10)
+        self.scroll = ctk.CTkScrollableFrame(self.widget_parameter_panel_list[name_tab], 
+                                             label_text="Parámetros y Condiciones Iniciales")
+        self.scroll.pack(fill="both",  expand=True, padx=10, pady=10)
 
         params= self.controller.get_variables()+self.controller.get_parameters()
 
-
-        # Ejemplo de parámetros dinámicos 
         for par in params:
             frame = ctk.CTkFrame(self.scroll)
             frame.pack(pady=5, fill="x", padx=10)
@@ -147,31 +153,34 @@ class GUI_Simulation(ctk.CTkToplevel):
             entry = ctk.CTkEntry(frame, placeholder_text=f"{par}")
             entry.pack(side="left", fill="x", expand=True)
 
-            self.entries_args[par] = entry
+            self.entries_args[name_tab][par] = entry
+            print(f"Entrada añadida para {name_tab}: {par}")
 
     def toggle_menu(self):
-        if self.parametros_visible:
-            self.parametros_panel.pack_forget()
-            self.parametros_visible = False
+        if self.widget_parameter_panel_list[self.tabview.get()]:
+            self.widget_parameter_panel_list[self.tabview.get()].pack_forget()
+            self.parametros_panel_list[self.tabview.get()] = False
         else:
-            self.parametros_panel.pack(side="right", fill="y", padx=10, pady=10)
-            self.parametros_visible = True
+            
+            self.parametros_visible_list[self.tabview.get()] = True
 
 
     def get_entries_args(self):
         """
         Devuelve un diccionario con el simbolo asociado y el CTkEntry correspondiente.
         """
-        return self.entries_args
+
+        print(f"Entradas args: {self.tabview.get()}")
+        return self.entries_args[self.tabview.get()]
     
     def get_time_args(self):
         """
         Devuelve un diccionario con los argumentos de tiempo.
         """
         return {
-            "t0": self.tiempo_inicio.get(),
-            "tf": self.tiempo_fin.get(),
-            "dt_tol": self.dt_tol.get()
+            "t0": self.t_ini_list[self.tabview.get()].get(),
+            "tf": self.t_fin_list[self.tabview.get()].get(),
+            "dt_tol": self.dt_tol_list[self.tabview.get()].get()
         }
     
     def get_result_text(self):
