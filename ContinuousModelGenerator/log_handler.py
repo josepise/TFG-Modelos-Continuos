@@ -25,7 +25,6 @@ class LogHandler:
 
     def generate_log_msg_prm(self, error_code, parameter):
         """Muestra un mensaje de consola con un parámetro adicional."""
-        print(f"LogHandler: {error_code} - {parameter}")
         message = self.log_codes.get(error_code, "Error desconocido.")
         message = message.replace("{}", str(parameter))
 
@@ -54,4 +53,3 @@ class LogHandler:
     def log_error(self, error_code):
         """Registra el error en consola o en un archivo de log."""
         message = self.errors.get(error_code, "Error desconocido.")
-        print(f"Error - {error_code}: {message}")

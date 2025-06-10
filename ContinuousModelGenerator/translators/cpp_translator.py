@@ -12,7 +12,10 @@ class CppSimulationGenerator(SimulationModelGenerator):
         self.pattern_pow = r'([a-zA-Z_][a-zA-Z_0-9]*(?:\[[^\]]+\])?|\(.+?\))\s*\*\*\s*(\d+(?:\.\d+)?)'
 
     def generate_file(self):
-        self.file = open(f"{self.path_file}/{self.name_file}.cpp", "w")
+        if os.name == 'nt':
+            self.file = open(f"{self.path_file}/{self.name_file}.cpp", "w")
+        else:
+            self.file = open(f"{self.path_file}/{self.name_file}", "w")
 
         self.set_var_identifiers()
         self.set_constants()
@@ -247,7 +250,6 @@ class CppSimulationGenerator(SimulationModelGenerator):
 
 
     def write_main(self):
-        # Write the main function
         num_args = 1
 
         self.file.write("int main(int argc, char* argv[]) {\n")
@@ -255,41 +257,87 @@ class CppSimulationGenerator(SimulationModelGenerator):
         self.file.write("        est[i].push_back(0.0);\n")  # Initialize with 0.0
         self.file.write("    }\n\n")
 
-
         str_symbols = self.get_str_symbols()
-        str_time="<t_0> <t_f> <tol>" if self.numerical_method == "runge-kutta-fehlberg" \
+        str_time = "<t_0> <t_f> <tol>" if self.numerical_method == "runge-kutta-fehlberg" \
                     else "<t_0> <t_f> <d_t>"
         
-        #Escribimos la comprobación de los argumentos de la línea de comandos.
-        self.file.write(f"\tif (argc < {len(self.constants)+len(self.initial_conditions)+3}) {{ \n")
-        self.file.write(f"\t\tcerr << \"Error en el número de parámetros: ./{self.name_file} {str_symbols} \" << \n" \
-                        + f"\t\t\" {str_time}   \"<< endl;\n")
-        self.file.write("\t\treturn 1;\n \t}\n\n")
+        # Calculamos el número de argumentos para cada modo
+        min_args_direct = len(self.constants) + len(self.initial_conditions) + 3 + 1  # +1 for program name
+        min_args_file = 4 + 1  # programa + archivo + t_start + t_end + (tol o dt) + program name
 
+        # Comprobación de argumentos: modo archivo de parámetros
+        self.file.write(f"    if (argc == {min_args_file}) {{\n")
+        self.file.write("        ifstream paramFile(argv[1]);\n")
+        self.file.write("        if (!paramFile.is_open()) {\n")
+        self.file.write("            cerr << \"Error: No se pudo abrir el archivo \" << argv[1] << endl;\n")
+        self.file.write("            return 1;\n")
+        self.file.write("        }\n\n")
         
+        self.file.write("        vector<double> params;\n")
+        self.file.write("        string line;\n")
+        self.file.write("        while (getline(paramFile, line)) {\n")
+        self.file.write("            if (!line.empty()) {\n")
+        self.file.write("                try {\n")
+        self.file.write("                    params.push_back(stod(line));\n")
+        self.file.write("                } catch (const invalid_argument& e) {\n")
+        self.file.write("                    cerr << \"Error: Formato incorrecto en el archivo de parametros: \" << line << endl;\n")
+        self.file.write("                    return 1;\n")
+        self.file.write("                }\n")
+        self.file.write("            }\n")
+        self.file.write("        }\n")
+        self.file.write("        paramFile.close();\n\n")
+        
+        self.file.write(f"        if (params.size() < {len(self.constants) + len(self.initial_conditions)}) {{\n")
+        self.file.write(f"            cerr << \"Error: El archivo debe contener {len(self.constants) + len(self.initial_conditions)} valores\" << endl;\n")
+        self.file.write("            return 1;\n")
+        self.file.write("        }\n\n")
+        
+        # Asignar parámetros desde el archivo
+        param_index = 0
         for constant in self.constants:
-            self.file.write(f"\t{constant}=atof(argv[{num_args}]);\n")
-            num_args += 1
-
-        for symbol, value in self.initial_conditions.items():
-            self.file.write(f"\test[{self.var_identifiers[symbol]}][0] = atof(argv[{num_args}]);    //{symbol}\n")
-            num_args += 1
-
-        self.file.write(f"\tt0 = atof(argv[{num_args}]);\n")
-        num_args += 1
+            self.file.write(f"        {constant} = params[{param_index}];\n")
+            param_index += 1
         
-        self.file.write(f"\ttf = atof(argv[{num_args}]);\n")
-        num_args += 1
+        for symbol, value in self.initial_conditions.items():
+            self.file.write(f"        est[{self.var_identifiers[symbol]}][0] = params[{param_index}];    //{symbol}\n")
+            param_index += 1
+        
+        self.file.write("        t0 = atof(argv[2]);\n")
+        self.file.write("        tf = atof(argv[3]);\n")
         
         if self.numerical_method == "runge-kutta-fehlberg":
-            self.file.write(f"\ttol = atof(argv[{num_args}]);\n")
-            num_args += 1
+            self.file.write("        tol = (argc > 4) ? atof(argv[4]) : 1e-6;\n")
         else:
-            self.file.write(f"\tdt = atof(argv[{num_args}]);\n")
-            num_args += 1
+            self.file.write("        dt = (argc > 4) ? atof(argv[4]) : 0.01;\n")
 
-        self.file.write("\n")
+        # Comprobación de argumentos: modo parámetros directos
+        self.file.write(f"    }} else if (argc == {min_args_direct}) {{\n")
+        self.file.write("        int numArgs = 1;\n\n")
+        
+        for constant in self.constants:
+            self.file.write(f"        {constant} = atof(argv[numArgs++]);\n")
 
+        for symbol, value in self.initial_conditions.items():
+            self.file.write(f"        est[{self.var_identifiers[symbol]}][0] = atof(argv[numArgs++]);    //{symbol}\n")
+
+        self.file.write("        t0 = atof(argv[numArgs++]);\n")
+        self.file.write("        tf = atof(argv[numArgs++]);\n")
+        
+        if self.numerical_method == "runge-kutta-fehlberg":
+            self.file.write("        tol = atof(argv[numArgs++]);\n")
+        else:
+            self.file.write("        dt = atof(argv[numArgs++]);\n")
+
+        # Mensaje de error para número incorrecto de argumentos
+        self.file.write("    } else {\n")
+        self.file.write("        cerr << \"Error en el numero de parametros:\" << endl;\n")
+        self.file.write(f"        cerr << \"Modo 1: ./{self.name_file} {str_symbols} {str_time}\" << endl;\n")
+        self.file.write(f"        cerr << \"Modo 2: ./{self.name_file} archivo_parametros.txt {str_time}\" << endl;\n")
+        self.file.write("        cerr << \"Modo 2: El orden de los parametros debe ser igual que el de entrada por argumentos y por filas\" << endl;\n")
+        self.file.write("        return 1;\n")
+        self.file.write("    }\n\n")
+
+        # Resto del código de simulación (sin cambios)
         if self.numerical_method == "euler":
             self.file.write("    int steps = static_cast<int>((tf - t0) / dt);\n")
             self.file.write("    for (int i = 1; i <= steps; ++i) {\n")
@@ -315,7 +363,7 @@ class CppSimulationGenerator(SimulationModelGenerator):
             self.file.write("           inp[i] = est[i].back();\n")
             self.file.write("       }\n")
             self.file.write("\n")
-           
+        
             self.file.write("       rkf45_step(t.back(), inp, h, y_new, error);\n")
             self.file.write("\n")
             self.file.write("       if (error <= tol) {\n")
@@ -332,19 +380,16 @@ class CppSimulationGenerator(SimulationModelGenerator):
             self.file.write("       h = min(h, tf - t.back());\n")
             self.file.write("    }\n")
         
-
         self.file.write("    // Save the results to a CSV file\n")
         self.file.write(f"    ofstream results(\"{self.name_file}_output_cpp.csv\");\n")
         self.file.write("    results << \"t\";\n")
 
         # Añadimos los nombres de las variables al archivo CSV.
         for symbol, index in self.var_identifiers.items():
-            self.file.write(f"    results << \"\t {symbol}\";\n")
+            self.file.write(f"    results << \"\\t {symbol}\";\n")
         self.file.write("    results << endl;\n")
-       
-        #Escribimos los resultados en el archivo CSV en un caso
-        # según el método de integración utilizado ya que el método
-        # de Runge-Kutta-Fehlberg no tiene un número fijo de pasos.
+    
+        # Escribimos los resultados en el archivo CSV
         if self.numerical_method == "runge-kutta-fehlberg":
             self.file.write("    for (size_t i = 0; i < est[0].size(); ++i) {\n")
             self.file.write("        results << t[i];\n")
@@ -353,7 +398,7 @@ class CppSimulationGenerator(SimulationModelGenerator):
             self.file.write("        results << t0 + i * dt;\n")
         
         self.file.write("        for (int j = 0; j < n_equations; ++j) {\n")
-        self.file.write("            results << \"\t \" << est[j][i];\n")
+        self.file.write("            results << \"\\t \" << est[j][i];\n")
         self.file.write("        }\n")
         self.file.write("        results << endl;\n")
         self.file.write("    }\n")
@@ -363,17 +408,41 @@ class CppSimulationGenerator(SimulationModelGenerator):
         self.file.write("}\n\n")
     
     def compile(self):
-        command=f"g++ -o {self.path_file}/{self.name_file} {self.path_file}/{self.name_file}.cpp -std=c++11 -static-libgcc -static-libstdc++"
-        subprocess.run(command, creationflags=subprocess.CREATE_NO_WINDOW)
-
-    def run(self, args):
-
+        flags = 0
+            
         #Comprobamos si es windows o linux para ejecutar el comando
         if os.name == 'nt':
-            command=f"{self.path_file}/{self.name_file}.exe {args}"
-        elif os.name == 'posix':
-            command=f"{self.path_file}/{self.name_file} {args}"
+            flags = subprocess.CREATE_NO_WINDOW
+        else:
+            #Quitamos del nombre del archivo la extensión .cpp si existe
+            if self.name_file.endswith('.cpp'):
+                self.name_file = self.name_file[:-4]
 
-        subprocess.run(command, creationflags=subprocess.CREATE_NO_WINDOW)
+        command = [
+            "g++",
+            "-o", f"{self.path_file}/{self.name_file}",
+            f"{self.path_file}/{self.name_file}.cpp",
+            "-std=c++11",
+            "-static-libgcc",
+            "-static-libstdc++"
+        ]
+        subprocess.run(command, creationflags=flags)
+
+
+    def run(self, args):
+        flags = 0
+            
+        #Comprobamos si es windows o linux para ejecutar el comando
+        if os.name == 'nt':
+            flags = subprocess.CREATE_NO_WINDOW
+            command = [
+                f"{self.path_file}/{self.name_file}.exe"
+            ] + args.split()
+        elif os.name == 'posix':
+            command = [
+                f"{self.path_file}/{self.name_file}"
+            ] + args.split()
+
+        subprocess.run(command, creationflags=flags)
         
 

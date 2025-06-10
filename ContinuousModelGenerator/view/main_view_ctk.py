@@ -5,7 +5,6 @@ from PIL import Image
 import os
 import sys
 from .simulation_view import GUI_Simulation
-import tkinter as tk
 
 
 class GUI_CTK:
@@ -24,16 +23,9 @@ class GUI_CTK:
         self.color_dropdown = "#F2F2F2"
         self.color_aux = "#4A6DD9"
         
-        #Obtenemos la resolución de la pantalla
-        root = tk.Tk()
-        root.withdraw()  # Ocultar la ventana raíz temporal
-        self.screen_width =int(root.winfo_screenwidth()* 0.70)
-        self.screen_height =int(root.winfo_screenheight()* 0.80)
-        root.destroy()  # Destruir la ventana raíz después de obtener la resolución
-
         self.window = ctk.CTk()
         self.window.title("Generador de Programas de Simulación Continua")
-        self.window.geometry(f"{self.screen_width}x{int(self.screen_height)}")
+        self.window.geometry(f"800x600")
         self.window.configure(fg_color=self.color_bg)
         # self.window.resizable(False, False)
 

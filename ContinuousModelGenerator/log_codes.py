@@ -2,6 +2,7 @@ LOG_CODES = \
         {   
             "INVALID_INPUT_EQUATION_EQUAL": "❗ Error: La expresión de la ecuación no está bien definida.",
             "INVALID_INPUT_EQUATION_VAR" : "❗ Error: No se encuentran definidas variables.",
+            "INVALID_INPUT_EQUATION_EXP" : "❗ Error: La expresión de la ecuación no está bien definida. Simbolo no Permitido \"{}\"",
             "INVALID_EQUATION_VAR_NOT_APPEAR" : "❗ Error: La variable \"{}\" no se encuentra definida en la ecuación.",
             "INVALID_EQUATION_CONSTANT_NOT_APPEAR": "❗ Error: La constante \"{}\" no se encuentra definida en la ecuación.",
             "INVALID_EQUATION_FREE_SYMBS": "❗ Error: El símbolo \"{}\" no se encuentra definido como variable o constante.",
@@ -13,6 +14,7 @@ LOG_CODES = \
             "INVALID_INPUT_COND_ACT:" : "❗ Error: No se encuentran definidas acciones.",
             "INVALID_COND_FREE_SYMBS": "❗ Error: El símbolo \"{}\" no se encuentra definido como variable o constante.",
             "INVALID_COND_DUP_SYMBS": "❗ Error: El símbolo \"{}\" se encuentra definido como variable y constante.",
+            "INVALID_INPUT_COND_EXP_INV_SYMB": "❗ Error: El símbolo \"{}\" no es válido en la expresión de la condición.",
             "INVALID_SIM_ENTRY": "❗ Error: El valor de \"{}\" no es válido para la entrada de la simulación.",
             "GENERATION_FAILED_NO_LANGUAGE": "❗ Error: No se ha definido el lenguaje de salida.",
             "GENERATION_FAILED_NO_OUTPUT": "❗ Error: No se ha definido la salida.",
@@ -20,6 +22,7 @@ LOG_CODES = \
             "GENERATION_FAILED_MISSING_VARS": "❗ Error: Faltan por definir las ecuaciones de las variables \"{}\".",
             "GENERATION_FAILED_NO_COMPILER": "❗ Error: No se encuentran los paquetes necesarios \"{}\".",
             "GENERATION_ERROR": "❗ Error: La generación de código ha fallado.",
+            "GENERATION_SUCCESS_PLOT": "Éxito: Generación de código para la visualización \"{}\" exitosa. No disponible la simulación.",
             "CONFIG_LOADED": "Éxito: Configuración cargada correctamente desde \"{}\".",
             "CONFIG_SAVED": "Éxito: Configuración guardada correctamente en \"{}\".",
             "SUCCESS_ADD_EQUATION": "Éxito: Ecuacion_{}  añadida correctamente.",

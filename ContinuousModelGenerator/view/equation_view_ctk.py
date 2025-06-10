@@ -228,8 +228,17 @@ class GUI_Equation():
         self.latex_ax.clear()
         self.latex_ax.axis('off')
 
+       
+       
         try:
-            latex_string = sp.latex(sp.sympify(self.text_entry_equation_window.get()))
+             #Necesario ya que sympify no soporta '='
+            if '=' in self.text_entry_equation_window.get():
+                left_side, right_side = self.text_entry_equation_window.get().split('=', 1)
+                left_expr= sp.latex(sp.sympify(left_side))
+                right_expr = sp.latex(sp.sympify(right_side))
+                latex_string = f"{left_expr} = {right_expr}" 
+            else:
+                latex_string = sp.latex(sp.sympify(self.text_entry_equation_window.get()))
         except:
             latex_string = self.text_entry_equation_window.get()
 

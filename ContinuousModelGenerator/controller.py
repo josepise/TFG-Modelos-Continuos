@@ -282,6 +282,12 @@ class GeneratorController:
         else:
             name = re.sub(patron, r'\1', name)  #Eliminamos d() y /dt del nombre de la ecuación
 
+        #Comprobamos que la ecuación no contenga simbolos no permitidos {,}
+        symbols_not_allowed=['{','}']
+        for symbol in symbols_not_allowed:
+            if symbol in eq:
+                self.log_handler.show_error_prm("INVALID_INPUT_EQUATION_EXP", symbol)
+                return None, None, None, None
 
         #Eliminamos las comas en el texto de las variables
         text_var=text_var.replace(",", " ")
@@ -318,6 +324,14 @@ class GeneratorController:
         text_var = text_var.replace(" ", "")
         text_constant = text_constant.replace(" ", "")
 
+
+        #Comprobamos que la ecuación no contenga simbolos no permitidos {,}
+        symbols_not_allowed=['{','}']
+        for symbol in symbols_not_allowed:
+            if symbol in text_exp:
+                self.log_handler.show_error_prm("INVALID_INPUT_COND_EXP_INV_SYMB", symbol)
+                return None, None, None, None
+        
         if text_exp == "" :
             self.log_handler.show_error("INVALID_INPUT_COND_EXP")
             return None, None, None, None
@@ -388,15 +402,17 @@ class GeneratorController:
         except Exception as e:
             self.log_handler.show_error_prm("GENERATION_ERROR", str(e))
             return False 
-          
-
-        #Habilita el botón de simulación en la vista  
-        self.view.simulate_button.configure(state="normal", fg_color="#3b8ed0", text_color="#FFFFFF")     
-
-        #Muestra el mensaje de éxito en la vista
+    
         path = self.model.get_path()
         name = self.model.get_file_name()
-        self.log_handler.show_success_prm("GENERATION_SUCCESS", f"{path}/{name}") 
+
+        #Habilita el botón de simulación en la vista unicamente si la generación es en csv
+        if self.model.get_output()== "plot":
+            self.log_handler.show_success_prm("GENERATION_SUCCESS_PLOT", f"{path}/{name}") 
+        else:
+            #Muestra el mensaje de éxito en la vista
+            self.view.simulate_button.configure(state="normal", fg_color="#3b8ed0", text_color="#FFFFFF")
+            self.log_handler.show_success_prm("GENERATION_SUCCESS", f"{path}/{name}")      
 
         return True
 
@@ -462,7 +478,7 @@ class GeneratorController:
             or float(time_args['tf']) <= 0:
             self.log_handler.show_error_prm("INVALID_SIM_ENTRY", "Tiempo final")
             return None
-        if not re.match(r'^-?\d+(\.\d+)?$', time_args['dt_tol']) or time_args['dt_tol'] == "" \
+        if not re.match(r'^\d+(?:\.\d+)?(?:[eE][+-]?\d+)?$', time_args['dt_tol']) or time_args['dt_tol'] == "" \
             or float(time_args['dt_tol']) <= 0:
             self.log_handler.show_error_prm("INVALID_SIM_ENTRY", "Paso de integración/Tolerancia") 
             return None
@@ -473,6 +489,7 @@ class GeneratorController:
         self.model.execute_simulation(args)                                           #Ejecuta el archivo de salida con los argumentos de entrada y tiempo
 
         translator_type = self.model.get_translator_type()                            #Obtenemos el tipo de traductor
+        
         name_file=self.model.get_file_name()
 
         data = self.model.get_output_simulation_file(f"{name_file}_output_{translator_type}.csv")  # Obtenemos el archivo de salida
@@ -483,7 +500,7 @@ class GeneratorController:
         self.log_handler.show_success("EXECUTION_SUCCESS")  #Muestra el mensaje de éxito en la vista    
 
     def export_pdf(self):
-        
+    
         view=self.view.get_simulation_view() 
 
         #Obtenemos la figura y los datos de la vista de simulación
@@ -493,6 +510,9 @@ class GeneratorController:
         #Obtenemos los argumentos de entrada de la vista
         entry_args=view.get_entries_args()                          
 
+        #Obtenemos los argumentos de tiempo de la vista
+        time_args=view.get_time_args()                              
+
         #Creamos la cadena de argumentos para la exportación del PDF
         args = {}
         for i in self.model.get_constants():
@@ -501,10 +521,9 @@ class GeneratorController:
         for i in self.model.get_var_identifiers():
             args[i] = entry_args[i].get()
 
-
         #Exportamos el PDF con los datos y la figura
-        name_file = f"{self.model.get_file_name()}_export.pdf"
-        self.model.export_pdf(data, figure, args, name_file)
+        name_file = f"{self.model.get_file_name()}_{view.tabview.get()}_export.pdf"
+        self.model.export_pdf(data, figure, args, time_args, name_file)
 
         self.log_handler.show_success_prm("SUCCESS_EXPORT", name_file)  #Muestra el mensaje de éxito en la vista
 

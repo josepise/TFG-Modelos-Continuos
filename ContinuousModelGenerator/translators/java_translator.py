@@ -13,8 +13,10 @@ class JavaSimulationGenerator(SimulationModelGenerator):
         self.pattern_pow = r'(inp\.get\(\d+\))\s*\*\*\s*(\d+)'
 
     def generate_file(self):
-        self.file = open(f"{self.path_file}/{self.name_file}.java", "w")
-
+        if os.name == "nt":
+            self.file = open(f"{self.path_file}/{self.name_file}.java", "w")
+        else:
+            self.file = open(f"{self.path_file}/{self.name_file}", "w")
         # Write the file
 
         self.set_var_identifiers()
@@ -68,7 +70,11 @@ class JavaSimulationGenerator(SimulationModelGenerator):
         self.file.write("\t}\n\n")
 
     def write_model_parameters(self):
-        self.file.write(f"public class {self.name_file}" + "{ \n")
+        if os.name != "nt":
+            name_file=self.name_file[:-5]
+        else:
+            name_file = self.name_file
+        self.file.write(f"public class {name_file}" + "{ \n")
         self.file.write(f"\tpublic static final int n_equations = {len(self.equations)};\n\n")
 
         if self.numerical_method == "runge-kutta-fehlberg":
@@ -233,6 +239,7 @@ class JavaSimulationGenerator(SimulationModelGenerator):
         self.file.write("\t\treturn new Pair<>(y5, error);\n")
         self.file.write("\t}\n\n")
 
+
     def write_main(self):
         self.file.write("\tpublic static void main(String[] args) throws IOException {\n")
         self.file.write("\t\tfor (int i = 0; i < n_equations; ++i) {\n")
@@ -240,33 +247,86 @@ class JavaSimulationGenerator(SimulationModelGenerator):
         self.file.write("\t\t}\n\n")
 
         str_symbols = self.get_str_symbols()
-        str_time= "<t_0> <t_f> <tol>" if self.numerical_method == "runge-kutta-fehlberg" \
-                    else "<t_0> <t_f> <d_t>"
+        str_time = "<t_0> <t_f> <tol>" if self.numerical_method == "runge-kutta-fehlberg" else "<t_0> <t_f> <d_t>"
 
-        # Check the number of command-line arguments
-        self.file.write(f"\t\tif (args.length < {len(self.constants) + len(self.initial_conditions) + 3}) {{\n")
-        self.file.write(f"\t\t\tSystem.out.println(\"Error in the number of parameters: java \" + \n")
-        self.file.write(f"\t\t\t\t\"{self.name_file}\" + \" {str_symbols} {str_time}\");\n")
+        # Calculamos el número de argumentos para cada modo
+        min_args_direct = len(self.constants) + len(self.initial_conditions) + 3
+        min_args_file = 4  # programa + archivo + t_start + t_end + (tol o dt)
+
+        # Comprobación de argumentos: modo archivo de parámetros
+        self.file.write(f"\t\tif (args.length == {min_args_file}) {{\n")
+        self.file.write("\t\t\ttry {\n")
+        self.file.write("\t\t\t\tList<String> lines = new ArrayList<>();\n")
+        self.file.write("\t\t\t\ttry (BufferedReader paramFile = new BufferedReader(new FileReader(args[0]))) {\n")
+        self.file.write("\t\t\t\t\tString line;\n")
+        self.file.write("\t\t\t\t\twhile ((line = paramFile.readLine()) != null) {\n")
+        self.file.write("\t\t\t\t\t\tline = line.trim();\n")
+        self.file.write("\t\t\t\t\t\tif (!line.isEmpty()) {\n")
+        self.file.write("\t\t\t\t\t\t\tlines.add(line);\n")
+        self.file.write("\t\t\t\t\t\t}\n")
+        self.file.write("\t\t\t\t\t}\n")
+        self.file.write("\t\t\t\t}\n")
+        self.file.write(f"\t\t\t\tif (lines.size() < {len(self.constants) + len(self.initial_conditions)}) {{\n")
+        self.file.write(f"\t\t\t\t\tSystem.out.println(\"Error: El archivo debe contener {len(self.constants) + len(self.initial_conditions)} valores\");\n")
+        self.file.write("\t\t\t\t\tSystem.exit(1);\n")
+        self.file.write("\t\t\t\t}\n")
+        
+        param_index = 0
+        for constant in self.constants:
+            self.file.write(f"\t\t\t\t{constant} = Double.parseDouble(lines.get({param_index}));\n")
+            param_index += 1
+        for symbol, value in self.initial_conditions.items():
+            self.file.write(f"\t\t\t\test.get({self.var_identifiers[symbol]}).set(0, Double.parseDouble(lines.get({param_index}))); // {symbol}\n")
+            param_index += 1
+        
+        self.file.write("\t\t\t\tt0 = Double.parseDouble(args[1]);\n")
+        self.file.write("\t\t\t\ttf = Double.parseDouble(args[2]);\n")
+        if self.numerical_method == "runge-kutta-fehlberg":
+            self.file.write("\t\t\t\ttol = args.length > 3 ? Double.parseDouble(args[3]) : 1e-6;\n")
+        else:
+            self.file.write("\t\t\t\tdt = args.length > 3 ? Double.parseDouble(args[3]) : 0.01;\n")
+        
+        self.file.write("\t\t\t} catch (FileNotFoundException e) {\n")
+        self.file.write("\t\t\t\tSystem.out.println(\"Error: No se pudo encontrar el archivo \" + args[0]);\n")
+        self.file.write("\t\t\t\tSystem.exit(1);\n")
+        self.file.write("\t\t\t} catch (NumberFormatException | IndexOutOfBoundsException e) {\n")
+        self.file.write("\t\t\t\tSystem.out.println(\"Error: Formato incorrecto en el archivo de parametros\");\n")
+        self.file.write("\t\t\t\tSystem.exit(1);\n")
+        self.file.write("\t\t\t}\n")
+
+        # Comprobación de argumentos: modo parámetros directos
+        self.file.write(f"\t\t}} else if (args.length == {min_args_direct}) {{\n")
+        self.file.write("\t\t\tint numArgs = 0;\n\n")
+
+        for constant in self.constants:
+            self.file.write(f"\t\t\t{constant} = Double.parseDouble(args[numArgs++]);\n")
+
+        for symbol, value in self.initial_conditions.items():
+            self.file.write(f"\t\t\test.get({self.var_identifiers[symbol]}).set(0, Double.parseDouble(args[numArgs++])); // {symbol}\n")
+
+        self.file.write("\t\t\tt0 = Double.parseDouble(args[numArgs++]);\n")
+        self.file.write("\t\t\ttf = Double.parseDouble(args[numArgs++]);\n")
+
+        if self.numerical_method == "runge-kutta-fehlberg":
+            self.file.write("\t\t\ttol = Double.parseDouble(args[numArgs++]);\n\n")
+        else:
+            self.file.write("\t\t\tdt = Double.parseDouble(args[numArgs++]);\n\n")
+        
+        if os.name == "nt":
+            name_file=self.name_file
+        else:
+            name_file=self.name_file[:-5]
+
+        # Mensaje de error para número incorrecto de argumentos
+        self.file.write("\t\t} else {\n")
+        self.file.write("\t\t\tSystem.out.println(\"Error en el numero de parametros:\");\n")
+        self.file.write(f"\t\t\tSystem.out.println(\"Modo 1: java {name_file} {str_symbols} {str_time}\");\n")
+        self.file.write(f"\t\t\tSystem.out.println(\"Modo 2: java {name_file} archivo_parametros.txt {str_time}\");\n")
+        self.file.write(f"\t\t\tSystem.out.println(\"Modo 2: El orden de los parametros debe ser igual que el de entrada por argumentos y por filas\");\n")
         self.file.write("\t\t\tSystem.exit(1);\n")
         self.file.write("\t\t}\n\n")
 
-        # Assign command-line arguments to constants and initial conditions
-        self.file.write("\t\tint numArgs = 0;\n\n")
-
-        for constant in self.constants:
-            self.file.write(f"\t\t{constant} = Double.parseDouble(args[numArgs++]);\n")
-
-        for symbol, value in self.initial_conditions.items():
-            self.file.write(f"\t\test.get({self.var_identifiers[symbol]}).set(0,Double.parseDouble(args[numArgs++])); // {symbol}\n")
-
-        self.file.write("\t\tt0 = Double.parseDouble(args[numArgs++]);\n")
-        self.file.write("\t\ttf = Double.parseDouble(args[numArgs++]);\n")
-
-        if self.numerical_method == "runge-kutta-fehlberg":
-            self.file.write("\t\ttol = Double.parseDouble(args[numArgs++]);\n\n")
-        else:
-            self.file.write("\t\tdt = Double.parseDouble(args[numArgs++]);\n\n")
-
+        # Resto del código de simulación
         if self.numerical_method == "euler":
             self.file.write("\t\tint steps = (int) ((tf - t0) / dt);\n")
             self.file.write("\t\tfor (int i = 1; i <= steps; ++i) {\n")
@@ -312,18 +372,18 @@ class JavaSimulationGenerator(SimulationModelGenerator):
         self.file.write("\t\t\tresults.write(\"t\");\n")
 
         for symbol, index in self.var_identifiers.items():
-            self.file.write(f"\t\t\tresults.write(\"\t {symbol}\");\n")
+            self.file.write(f"\t\t\tresults.write(\"\\t {symbol}\");\n")
         self.file.write("\t\t\tresults.newLine();\n")
 
         self.file.write("\t\t\tfor (int i = 0; i < est.get(0).size(); ++i) {\n")
         
-        #En el caso de que el metodo sea runge-kutta-fehlberg, se guarda el tiempo en la lista t
-        #por lo que para mostrarlo en el archivo de salida se utiliza t.get(i).
-        #En los demás métodos se utiliza t0 + i * dt ya que el paso de tiempo es constante.
+        # En el caso de que el método sea runge-kutta-fehlberg, se guarda el tiempo en la lista t
+        # por lo que para mostrarlo en el archivo de salida se utiliza t.get(i).
+        # En los demás métodos se utiliza t0 + i * dt ya que el paso de tiempo es constante.
         if self.numerical_method == "runge-kutta-fehlberg":    
             self.file.write("\t\t\t\tresults.write(t.get(i).toString());\n")
         else:
-            self.file.write("\t\t\t\tresults.write(String.valueOf(t0+i * dt));\n")
+            self.file.write("\t\t\t\tresults.write(String.valueOf(t0 + i * dt));\n")
 
         self.file.write("\t\t\t\tfor (int j = 0; j < n_equations; ++j) {\n")
         self.file.write("\t\t\t\t\tresults.write(\"\\t\" + est.get(j).get(i));\n")
@@ -336,13 +396,31 @@ class JavaSimulationGenerator(SimulationModelGenerator):
         self.file.write("}\n")
 
     def compile(self):
-        command =f"javac {self.path_file}/{self.name_file}.java"
-        subprocess.run(command, creationflags=subprocess.CREATE_NO_WINDOW)
+        flags = 0
+        if os.name == "nt":  # "nt" es Windows
+            flags = subprocess.CREATE_NO_WINDOW
+        else:
+            #Quitamos del nombre del archivo la extensión .java si existe
+            if self.name_file.endswith('.java'):
+                self.name_file = self.name_file[:-5]
+
+        command = [
+            "javac",
+            f"{self.path_file}/{self.name_file}.java"
+        ]
+        subprocess.run(command, creationflags=flags)
        
 
     def run(self,args=None):
-        command=f"java -cp {self.path_file} {self.name_file} \
-                 {args} "
+
+        flags = 0
+        if os.name == "nt":  # "nt" es Windows
+            flags = subprocess.CREATE_NO_WINDOW
+
+        command = [
+            "java", "-cp", self.path_file, self.name_file
+        ] + args.split()
         
-        subprocess.run(command, creationflags=subprocess.CREATE_NO_WINDOW)
+        
+        subprocess.run(command, creationflags=flags)
         

@@ -46,7 +46,7 @@ class ContinuousModelGenerator:
                                   "Runge Kutta 4": "runge-kutta-4", 
                                   "Runge Kutta Fehlberg": "runge-kutta-fehlberg"}
         self.packages = {"python":["python"], "cpp":["g++"], "java":["javac", "java"]}
-
+        self.packages_linux = {"python":["python3"], "cpp":["g++"], "java":["javac", "java"]}
           
     def get_equations(self):
         """
@@ -88,7 +88,10 @@ class ContinuousModelGenerator:
         """
         Obtiene el nombre del archivo.
         """
-        return self.file_name
+        name=self.file_name
+        if os.name != 'nt' and self.translator_type == "python":
+            name=self.file_name[:-3]
+        return name
     
     def get_translator_type(self):
         """
@@ -360,12 +363,23 @@ class ContinuousModelGenerator:
     def check_command(self, commands):
         # Ejecuta el comando y captura el código de salida
         missing_commands = ""
-        dict_commands = {
-            "python": "--version",
-            "g++": "--version",
-            "java": "-version",
-            "javac": "-version"
-        }
+        # Si no es Windows
+        
+        if os.name != 'nt':  
+            dict_commands = {
+                "python3": "--version",
+                "g++": "--version",
+                "java": "-version",
+                "javac": "-version"
+            }
+        else:  # Si es Windows
+            dict_commands = {
+                "python": "--version",
+                "g++": "--version",
+                "java": "-version",
+                "javac": "-version"
+            }
+        
         for command in commands:
             exit_code = os.system(f"{command} {dict_commands[command]} >nul 2>&1")
             if exit_code != 0:
@@ -380,11 +394,20 @@ class ContinuousModelGenerator:
                 )
                 
                 if "Name: numpy" in result.stdout:
-                    return True
+                    pass
                 else:
                     missing_commands += "numpy "
             except subprocess.CalledProcessError:
-                missing_commands += "numpy "
+                result = subprocess.run(
+                    ["pipx","list"],
+                    capture_output=True, text=True, check=True
+                )
+                
+                if "numpy" in result.stdout:
+                    pass
+                else:
+                    missing_commands += "numpy "      
+
 
         return missing_commands
         
@@ -412,7 +435,13 @@ class ContinuousModelGenerator:
 
 
     def check_compiler(self):
-        missing_commands = self.check_command(self.packages[self.get_translator_type()])
+        #Comprobamos que se encuentra en Windows
+        if os.name == 'nt':
+            packages = self.packages
+        else:  
+            packages = self.packages_linux
+
+        missing_commands = self.check_command(packages[self.get_translator_type()])
         
         if missing_commands:
             return ("GENERATION_FAILED_NO_COMPILER", missing_commands)
@@ -435,7 +464,7 @@ class ContinuousModelGenerator:
         
         return content
     
-    def export_pdf(self, text, fig, params, filename="resultado_exportado.pdf"):
+    def export_pdf(self, text, fig, params, time ,filename="resultado_exportado.pdf"):
         # Crear documento PDF
         doc = SimpleDocTemplate(filename, pagesize=letter)
         elementos = []
@@ -470,7 +499,10 @@ class ContinuousModelGenerator:
         elementos.append(Spacer(1, 12))
 
         #Intervalos de tiempo
-        tiempo = Paragraph(f"<b>Rango de Tiempo:</b> {self.time_range[0]} a {self.time_range[1]} con paso de {self.time_range[2]}", estilos["Normal"])
+        if self.method == "runge-kutta-fehlberg":
+            tiempo = Paragraph(f"<b>Rango de Tiempo:</b> {time['t0']} a {time['tf']} con tolerancia de {time['dt_tol']}", estilos["Normal"])
+        else:
+            tiempo = Paragraph(f"<b>Rango de Tiempo:</b> {time['t0']} a {time['tf']} con paso de {time['dt_tol']}", estilos["Normal"])
         elementos.append(tiempo)
         elementos.append(Spacer(1, 12))
     

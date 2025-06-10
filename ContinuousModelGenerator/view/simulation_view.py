@@ -17,7 +17,7 @@ class GUI_Simulation(ctk.CTkToplevel):
         self.controller = controller
         self.title("Simulación")
         self.geometry("1200x650")
-        self.resizable(False, False)
+        # self.resizable(False, False)
 
         self.graphic_list = []  # Lista para almacenar frames de gráficos
         self.result_list = []  # Lista para almacenar frames de resultados
@@ -154,7 +154,6 @@ class GUI_Simulation(ctk.CTkToplevel):
             entry.pack(side="left", fill="x", expand=True)
 
             self.entries_args[name_tab][par] = entry
-            print(f"Entrada añadida para {name_tab}: {par}")
 
     def toggle_menu(self):
         if self.widget_parameter_panel_list[self.tabview.get()]:
@@ -169,8 +168,6 @@ class GUI_Simulation(ctk.CTkToplevel):
         """
         Devuelve un diccionario con el simbolo asociado y el CTkEntry correspondiente.
         """
-
-        print(f"Entradas args: {self.tabview.get()}")
         return self.entries_args[self.tabview.get()]
     
     def get_time_args(self):
