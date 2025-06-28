@@ -1,6 +1,7 @@
 ContinuousModelGenerator/__pycache__
 models/
 ContinuousModelGenerator/translators/__pycache__
+ContinuousModelGenerator/view/__pycache__
+ContinuousModelGenerator.egg-info/
 *.csv
 build/
-dist/
