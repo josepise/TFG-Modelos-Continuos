@@ -99,7 +99,7 @@ TFG-MODELOS-CONTINUOS/
 ![Interfaz condición](img/pantalla_condicion.png)
 
 ---
-**Ventana de simulación:** Permite la visualización de forma gráfica y tabular resultante de la simulación del modelo. Contiene herramientas para tener varias simulaciones al mismo tiempos y la exportación de un resumen en formato PDF.
+**Ventana de simulación:** Permite la visualización de forma gráfica y tabular resultante de la simulación del modelo. Contiene herramientas para tener varias simulaciones al mismo tiempo y la exportación de un resumen en formato PDF.
 
 ![Interfaz simulación](img/pantalla_simulación.png)
 
